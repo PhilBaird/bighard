@@ -8,32 +8,88 @@
 // output
 // Time_Of_Transition_1 PID_1 Old_State_1 New_State_1
 
-#define n 20
+#define arrlen 20
+#define ticks 120
 
 struct Process {
     int PID, Arrival_Time, Total_CPU_Time, IO_Frequency, IO_Duration;
+    int runningC, waitingC;
 };
 
-struct Process ready[n], running[n], waiting[n];
-int readyLen = 0, runningLen = 0, waitingLen = 0, tick = 0;
+struct Process ready[arrlen], running[arrlen], waiting[arrlen];
 
+void remove_element(struct Process array[arrlen], int index, int array_length);
+
+void admitted(struct Process process);
+
+void terminate(int PID);
+
+void wait(int PID);
+
+void dispatch(int PID);
+
+void done(int PID);
+
+void interrupt(int PID);
+
+int readyLen = 0, runningLen = 0, waitingLen = 0, tick = 0;
+//int PID, Arrival_Time, Total_CPU_Time, IO_Frequency, IO_Duration;
+//int runningC, waitingC;
 int main(void) {
-    while(tick < 100){
+    struct Process p1, p2;
+    p1.PID = 1;
+    p1.Arrival_Time = 5;
+    p1.Total_CPU_Time = 50;
+    p1.IO_Frequency = 20;
+    p1.IO_Duration = 10;
+    p1.runningC = 0;
+    p1.waitingC = 0;
+    admitted(p1);
+    p2.PID = 2;
+    p2.Arrival_Time = 10;
+    p2.Total_CPU_Time = 50;
+    p2.IO_Frequency = 20;
+    p2.IO_Duration = 10;
+    p2.runningC = 0;
+    p2.waitingC = 0;
+    admitted(p2);
+    while(tick < ticks){
+//        printf("\nt: %i", tick );
         if(readyLen > 0){
             struct Process* ptr = ready;
             for (int i=0; i<readyLen; i++, ptr++ ) {
+                if (runningLen == 0 && tick >= ptr->Arrival_Time) {
+                    printf("\n%i -> dispatch: %i",tick, ptr->PID);
+                    dispatch(ptr->PID);
 
+                }
             }
         }
         if(runningLen > 0){
             struct Process* ptr = running;
             for (int i=0; i<runningLen; i++, ptr++ ) {
-                ptr->Total_CPU_Time--;
+                if (ptr->runningC >= ptr->Total_CPU_Time){
+                    printf("\n%i -> terminate: %i",tick, ptr->PID);
+                    terminate(ptr->PID);
+                }
+                else if (ptr->runningC > 0 && ptr->runningC % ptr->IO_Frequency == 0 ) {
+                    printf("\n%i -> wait: %i",tick, ptr->PID);
+                    wait(ptr->PID);
+                }
+                ptr->runningC ++;
+
+
+
             }
         }
         if(waitingLen > 0){
             struct Process* ptr = waiting;
             for (int i=0; i<waitingLen; i++, ptr++ ) {
+                if (ptr->waitingC > 0 && ptr->waitingC % ptr->IO_Duration == 0) {
+                    printf("\n%i -> done: %i",tick, ptr->PID);
+                    done(ptr->PID);
+                }
+                ptr->waitingC ++;
 
             }
         }
@@ -42,76 +98,81 @@ int main(void) {
     return 0;
 }
 
-int admitted(struct Process* process) {
+
+
+void admitted(struct Process process) {
     // gone -> ready
+    printf("\nadmitted: %i", process.PID);
     ready[readyLen] = process;
     readyLen ++;
 }
 
-int dispatch(int PID) {
+void dispatch(int PID) {
     // ready -> running
     struct Process* ptr = ready;
     for (int i=0; i<readyLen; i++, ptr++ ) {
         if(ptr->PID == PID){
-            running[runningLen] = ptr;
+            running[runningLen] = *ptr;
             runningLen ++;
-            this.remove_element(ready, i, readyLen)
+            remove_element(ready, i, readyLen);
             readyLen --;
         }
     }
 }
 
-int wait(int PID){
+void wait(int PID){
     // running -> waiting
     struct Process* ptr = running;
     for (int i=0; i<runningLen; i++, ptr++ ) {
         if(ptr->PID == PID){
-            waiting[waitingLen] = ptr;
+            waiting[waitingLen] = *ptr;
             waitingLen ++;
-            this.remove_element(running, i, runningLen)
+            remove_element(running, i, runningLen);
             runningLen --;
         }
     }
 }
 
-int done(int PID){
+
+
+void done(int PID){
     // waiting -> ready
     struct Process* ptr = waiting;
     for (int i=0; i<waitingLen; i++, ptr++ ) {
         if(ptr->PID == PID){
-            ready[readyLen] = ptr;
+            ready[readyLen] = *ptr;
             readyLen ++;
-            this.remove_element(waiting, i, waitingLen)
+            remove_element(waiting, i, waitingLen);
             waitingLen --;
         }
     }
 }
 
-int interrupt(int PID){
+void interrupt(int PID){
     // running -> ready
     struct Process* ptr = running;
     for (int i=0; i<runningLen; i++, ptr++ ) {
         if(ptr->PID == PID){
-            ready[readyLen] = ptr;
+            ready[readyLen] = *ptr;
             readyLen ++;
-            this.remove_element(running, i, runningLen)
+            remove_element(running, i, runningLen);
             runningLen --;
         }
     }
 }
 
-int terminate(int PID){
+void terminate(int PID){
     // running -> gone
     struct Process* ptr = running;
     for (int i=0; i<runningLen; i++, ptr++ ) {
         if(ptr->PID == PID){
-            this.remove_element(running, i, runningLen)
+            remove_element(running, i, runningLen);
             runningLen --;
         }
     }
 }
 
-void remove_element(struct Process *array, int index, int array_length){
+void remove_element(struct Process array[arrlen], int index, int array_length) {
     for(int i = index; i < array_length - 1; i++) array[i] = array[i + 1];
 }
 

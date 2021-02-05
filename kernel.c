@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 // Created by plipm on 2/3/2021.
@@ -33,37 +32,32 @@ void done(int PID);
 
 void interrupt(int PID);
 
+void readFile();
+
+void readFile2();
+
+const char* getField(char* line, int num);
+
 int getline(char **pString, size_t *pInt, FILE *pIobuf);
 
 int readyLen = 0, runningLen = 0, waitingLen = 0, tick = 0;
 //int PID, Arrival_Time, Total_CPU_Time, IO_Frequency, IO_Duration;
 //int runningC, waitingC;
 int main(void) {
-    struct Process p1, p2;
-    p1.PID = 1;
-    p1.Arrival_Time = 5;
-    p1.Total_CPU_Time = 50;
-    p1.IO_Frequency = 20;
-    p1.IO_Duration = 10;
-    p1.runningC = 0;
-    p1.waitingC = 0;
-    admitted(p1);
-    p2.PID = 2;
-    p2.Arrival_Time = 10;
-    p2.Total_CPU_Time = 50;
-    p2.IO_Frequency = 20;
-    p2.IO_Duration = 10;
-    p2.runningC = 0;
-    p2.waitingC = 0;
-    admitted(p2);
+
+    readFile();
+
+    int breakout = 0;
     while(tick < ticks){
+        breakout = 0;
 //        printf("\nt: %i", tick );
         if(readyLen > 0){
             struct Process* ptr = ready;
             for (int i=0; i<readyLen; i++, ptr++ ) {
-                if (runningLen == 0 && tick >= ptr->Arrival_Time) {
+                if (runningLen == 0 && tick >= ptr->Arrival_Time  && breakout == 0) {
                     printf("\n%i -> dispatch: %i",tick, ptr->PID);
                     dispatch(ptr->PID);
+                    breakout = 1;
 
                 }
             }
@@ -71,13 +65,15 @@ int main(void) {
         if(runningLen > 0){
             struct Process* ptr = running;
             for (int i=0; i<runningLen; i++, ptr++ ) {
-                if (ptr->runningC >= ptr->Total_CPU_Time){
+                if (ptr->runningC >= ptr->Total_CPU_Time  && breakout == 0){
                     printf("\n%i -> terminate: %i",tick, ptr->PID);
                     terminate(ptr->PID);
+                    breakout = 1;
                 }
-                else if (ptr->runningC > 0 && ptr->runningC % ptr->IO_Frequency == 0 ) {
+                else if (ptr->runningC > 0 && ptr->runningC % ptr->IO_Frequency == 0  && breakout == 0) {
                     printf("\n%i -> wait: %i",tick, ptr->PID);
                     wait(ptr->PID);
+                    breakout = 1;
                 }
                 ptr->runningC ++;
 
@@ -88,9 +84,10 @@ int main(void) {
         if(waitingLen > 0){
             struct Process* ptr = waiting;
             for (int i=0; i<waitingLen; i++, ptr++ ) {
-                if (ptr->waitingC > 0 && ptr->waitingC % ptr->IO_Duration == 0) {
+                if (ptr->waitingC > 0 && ptr->waitingC % ptr->IO_Duration == 0  && breakout == 0) {
                     printf("\n%i -> done: %i",tick, ptr->PID);
                     done(ptr->PID);
+                    breakout = 1;
                 }
                 ptr->waitingC ++;
 
@@ -179,46 +176,30 @@ void remove_element(struct Process array[arrlen], int index, int array_length) {
     for(int i = index; i < array_length - 1; i++) array[i] = array[i + 1];
 }
 
-void readFile(char filepath[]){
-    FILE *f;
-    f = fopen(filepath, "r");
-    size_t len = 0;
-    char line [256];
-    char delim[] =" ";
-    struct Process p1;
-    int data[5] ;
-    int x = 0;
+void readFile()
+{
+    FILE* file = fopen ("input.txt", "r");
+    int i,i1,i2,i3,i4;
+    while (!feof (file))
+    {
 
-    if (f = NULL){
-        printf(" Ya file broken.\n");
-        system("exit");
-    }
-    while(fgets(line,sizeof(line), f) != -1){
-
-        char *ptr = strtok(line, delim);
-        while (ptr != NULL){
-            data[x] = (int)ptr;
-            x ++;
-
-
-        }
-        x = 0;
-        p1.PID = data[0];
-        p1.Arrival_Time = data[1];
-        p1.Total_CPU_Time = data[2];
-        p1.IO_Frequency = data[3];
-        p1.IO_Duration = data[4];
+        fscanf (file, "%d %d %d %d %d", &i, &i1, &i2, &i3, &i4);
+        //printf ("\n%d %d %d %d %d\n", i, i1, i2, i3, i4);
+        struct Process p1;
+        p1.PID = i;
+        p1.Arrival_Time = i1;
+        p1.Total_CPU_Time = i2;
+        p1.IO_Frequency = i3;
+        p1.IO_Duration = i4;
         p1.runningC = 0;
         p1.waitingC = 0;
         admitted(p1);
 
     }
-
-    fclose(f);
-
-
+    fclose (file);
 
 }
+
 
 
 

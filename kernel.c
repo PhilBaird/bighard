@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#define _GNU_SOURCE
 // Created by plipm on 2/3/2021.
 //
 
@@ -12,8 +14,7 @@
 #define ticks 120
 
 struct Process {
-    int PID, Arrival_Time, Total_CPU_Time, IO_Frequency, IO_Duration;
-    int runningC, waitingC;
+    int PID, Arrival_Time, Total_CPU_Time, IO_Frequency, IO_Duration, runningC,waitingC;
 };
 
 struct Process ready[arrlen], running[arrlen], waiting[arrlen];
@@ -31,6 +32,8 @@ void dispatch(int PID);
 void done(int PID);
 
 void interrupt(int PID);
+
+int getline(char **pString, size_t *pInt, FILE *pIobuf);
 
 int readyLen = 0, runningLen = 0, waitingLen = 0, tick = 0;
 //int PID, Arrival_Time, Total_CPU_Time, IO_Frequency, IO_Duration;
@@ -175,4 +178,45 @@ void terminate(int PID){
 void remove_element(struct Process array[arrlen], int index, int array_length) {
     for(int i = index; i < array_length - 1; i++) array[i] = array[i + 1];
 }
+
+void readFile(char filepath[]){
+    FILE *f;
+    f = fopen(filepath, "r");
+    size_t len = 0;
+    char * line = NULL;
+    char delim[] =" ";
+    struct Process p1;
+    int data[5] ;
+    int x = 0;
+
+    if (f = NULL){
+        printf(" Ya file broken.\n");
+        system("exit");
+    }
+    while(getline(&line,&len, f) != -1){
+        char *ptr = strtok(line, delim);
+        while (ptr != NULL){
+            data[x] = (int)ptr;
+            x ++;
+
+        }
+        x = 0;
+        p1.PID = data[0];
+        p1.Arrival_Time = data[1];
+        p1.Total_CPU_Time = data[2];
+        p1.IO_Frequency = data[3];
+        p1.IO_Duration = data[4];
+        p1.runningC = 0;
+        p1.waitingC = 0;
+        admitted(p1);
+
+    }
+
+    fclose(f);
+
+
+
+}
+
+
 

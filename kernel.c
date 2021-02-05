@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#define _GNU_SOURCE
+
 // Created by plipm on 2/3/2021.
 //
 
@@ -183,7 +183,7 @@ void readFile(char filepath[]){
     FILE *f;
     f = fopen(filepath, "r");
     size_t len = 0;
-    char * line = NULL;
+    char line [256];
     char delim[] =" ";
     struct Process p1;
     int data[5] ;
@@ -193,11 +193,13 @@ void readFile(char filepath[]){
         printf(" Ya file broken.\n");
         system("exit");
     }
-    while(getline(&line,&len, f) != -1){
+    while(fgets(line,sizeof(line), f) != -1){
+
         char *ptr = strtok(line, delim);
         while (ptr != NULL){
             data[x] = (int)ptr;
             x ++;
+
 
         }
         x = 0;

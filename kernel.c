@@ -11,6 +11,7 @@
 
 #define arrlen 20
 #define ticks 120
+#define quantum 3
 #define input "input.txt"
 #define output "output.txt"
 
@@ -51,7 +52,8 @@ void ep();
 
 void rr();
 
-
+// note add to ready -> run => ptr->runningC ++;
+// node add to run  -> wait => && ptr->IO_Frequency != 0 &&
 
 int readyLen = 0, runningLen = 0, waitingLen = 0, tick = 0;
 //int PID, Arrival_Time, Total_CPU_Time, IO_Frequency, IO_Duration;
@@ -80,6 +82,7 @@ int main() {
     clearOutput();
     switch(scheduler){
         case 1:
+//            for (int i=0; i<runningLen; i++, ptr++ ) {
             readFile();
             fcfs();
             break;
@@ -115,7 +118,7 @@ void fcfs(){
                     breakout = 1;
                 }
                     // if the process didnt just start and it is evenly divisible by the io frequency and no other action has happnened
-                else if (ptr->runningC > 0 && ptr->runningC % ptr->IO_Frequency == 0  && breakout == 0) {
+                else if (ptr->runningC > 0 && ptr->IO_Frequency != 0 && ptr->runningC % ptr->IO_Frequency == 0  && breakout == 0) {
                     printf("%i -> wait: %i\n",tick, ptr->PID);
                     printFile(tick, ptr->PID, "RUNNING", "WAITING");
                     // the processes is moved to waiting
@@ -137,9 +140,12 @@ void fcfs(){
                 if (runningLen == 0 && tick >= ptr->Arrival_Time  && breakout == 0) {
                     printf("%i -> dispatch: %i\n",tick, ptr->PID);
                     printFile(tick, ptr->PID, "READY", "RUNNING");
+                    // first tick it is in running for it counts
+                    ptr->runningC ++;
                     // move the process to running
                     dispatch(ptr->PID);
                     breakout = 1;
+
 
                 }
             }
@@ -246,6 +252,7 @@ void ep(){
 void rr(){
     // to make sure max only one transition per tick
     int breakout = 0;
+    int run = 0;
     // loops for each tick
     while(tick < ticks){
         breakout = 0;
@@ -253,22 +260,35 @@ void rr(){
         if(runningLen > 0){
             struct Process* ptr = running;
             for (int i=0; i<runningLen; i++, ptr++ ) {
+
                 // if the running count for the process greater than the total cpu time and no other action has happened
                 if (ptr->runningC >= ptr->Total_CPU_Time  && breakout == 0){
                     printf("%i -> terminate: %i\n",tick, ptr->PID);
                     printFile(tick, ptr->PID, "RUNNING", "TERMINATED");
                     terminate(ptr->PID);
                     breakout = 1;
+                    run = 0;
                 }
-                    // if the process didnt just start and it is evenly divisible by the io frequency and no other action has happnened
-                else if (ptr->runningC > 0 && ptr->runningC % ptr->IO_Frequency == 0  && breakout == 0) {
+                // if the process has been for longer than the quantum consecutively
+                else if (run >= quantum && breakout == 0 ){
+                    printf("%i -> kicked: %i ------> %i \n",tick, ptr->PID, ptr->runningC+1);
+                    printFile(tick, ptr->PID, "RUNNING", "READY");
+                    // the processes is moved to waiting
+                    interrupt(ptr->PID);
+                    breakout = 1;
+                    run = 0;
+                }
+                    // if the process didnt just start and it is evenly divisible by the io frequency and no other action has happened
+                else if (ptr->runningC > 0 && ptr->IO_Frequency != 0 && ptr->runningC % ptr->IO_Frequency == 0  && breakout == 0) {
                     printf("%i -> wait: %i\n",tick, ptr->PID);
                     printFile(tick, ptr->PID, "RUNNING", "WAITING");
                     // the processes is moved to waiting
                     wait(ptr->PID);
                     breakout = 1;
+                    run = 0;
                 }
                 ptr->runningC ++;
+                run ++;
 
 
 
@@ -287,6 +307,8 @@ void rr(){
                     // move the process to running
                     dispatch(ptr->PID);
                     breakout = 1;
+                    // the tick it is put into the running queue counts as run time.
+                    ptr->runningC ++;
 
                 }
             }
@@ -410,7 +432,7 @@ void remove_element(struct Process array[arrlen], int index, int array_length) {
  */
 void readFile()
 {
-    FILE* file = fopen (input, "r");
+    FILE* file = fopen (input , "r");
     int i,i1,i2,i3,i4;
     while (!feof (file))
     {
@@ -441,7 +463,7 @@ void readFile()
  */
 void printFile(int t, int PID, char *s1, char *s2)
 {
-    FILE* file = fopen (output, "a");
+    FILE* file = fopen (output+'_', "a");
     fprintf (file, "%d %d %s %s\n", t, PID, s1, s2);
     fclose (file);
 }

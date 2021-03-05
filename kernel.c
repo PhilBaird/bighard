@@ -15,7 +15,7 @@
 #define output "output.txt"
 
 struct Process {
-    int PID, Arrival_Time, Total_CPU_Time, IO_Frequency, IO_Duration, runningC,waitingC;
+    int PID, Arrival_Time, Total_CPU_Time, IO_Frequency, IO_Duration, runningC,waitingC, external_priority;
 };
 
 struct Process ready[arrlen], running[arrlen], waiting[arrlen];
@@ -45,6 +45,7 @@ int readyLen = 0, runningLen = 0, waitingLen = 0, tick = 0;
 //int PID, Arrival_Time, Total_CPU_Time, IO_Frequency, IO_Duration;
 //int runningC, waitingC;
 int main(int argc, char *argv[]) {
+
     clearOutput();
     readFile();
     // to make sure max only one transition per tick
@@ -158,7 +159,13 @@ void wait(int PID){
     }
 }
 
+void swap(int pos1, int pos2){
+   struct Process temp = ready[pos1];
+   ready[pos1] = ready[pos2];
+   ready[pos2] = temp;
 
+
+}
 
 void done(int PID){
     // waiting -> ready

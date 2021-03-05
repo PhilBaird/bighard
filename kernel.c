@@ -15,10 +15,15 @@
 #define output "output.txt"
 
 struct Process {
-    int PID, Arrival_Time, Total_CPU_Time, IO_Frequency, IO_Duration, runningC, waitingC;
+    int PID, Arrival_Time, Total_CPU_Time, IO_Frequency, IO_Duration, runningC, waitingC, priority;
+};
+struct ProcessData{
+    int startWait, totalWait, arrivalTime, executedTime;
 };
 
 struct Process ready[arrlen], running[arrlen], waiting[arrlen];
+struct ProcessData data[arrlen];
+
 
 void remove_element(struct Process array[arrlen], int index, int array_length);
 
@@ -196,17 +201,17 @@ void ep(){
         if(readyLen > 0){
             // go through all the processes
             struct Process* ptr = ready;
-            prioties = arrlen;
+            int priorities = arrlen;
 
             for (int i=0; i<readyLen; i++, ptr++ ) {
-                if ptr->prioties < prioties {
-                    prioties = ptr->prioties
+                if (ptr->priority < priorities) {
+                    priorities = ptr->priority;
 
                 }
             }
             for (int i=0; i<readyLen; i++, ptr++ ) {
                 // if the running array is empty and the tick is after the arrival time and there has not been a action preformed yet
-                if (runningLen == 0 && tick >= ptr->Arrival_Time  && breakout == 0 && ptr->prioties = prioties) {
+                if (runningLen == 0 && tick >= ptr->Arrival_Time  && breakout == 0 && ptr-> priority == priorities) {
                     printf("%i -> dispatch: %i\n",tick, ptr->PID);
                     printFile(tick, ptr->PID, "READY", "RUNNING");
                     // move the process to running
@@ -312,8 +317,9 @@ void rr(){
 
 
 void admitted(struct Process process) {
-    // gone -> ready
+    // arrival -> ready
     printf("admitted: %i\n", process.PID);
+    data[process.PID].arrivalTime = tick;
     // adds process to the end of the ready array
     ready[readyLen] = process;
     readyLen ++;
@@ -322,6 +328,7 @@ void admitted(struct Process process) {
 void dispatch(int PID) {
     // ready -> running
     // goes through each process in the ready array
+    data[PID].totalWait += tick-data[PID].startWait;
     struct Process* ptr = ready;
     for (int i=0; i<readyLen; i++, ptr++ ) {
         // finds the matching pid
@@ -368,6 +375,7 @@ void done(int PID){
 
 void interrupt(int PID){
     // running -> ready
+    data[PID].startWait =tick;
     struct Process* ptr = running;
     for (int i=0; i<runningLen; i++, ptr++ ) {
         if(ptr->PID == PID){
@@ -380,7 +388,8 @@ void interrupt(int PID){
 }
 
 void terminate(int PID){
-    // running -> gone
+    // running -> Done
+    data[PID].executedTime = tick;
     struct Process* ptr = running;
     for (int i=0; i<runningLen; i++, ptr++ ) {
         if(ptr->PID == PID){

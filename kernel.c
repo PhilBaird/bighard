@@ -54,10 +54,17 @@ void fcfs();
 void ep();
 void rr();
 
+void initMem();
+int usedPart();
+int freePart();
+int freeMem();
+int usableMem();
+int usedMem();
+void removeMem(struct Process process);
+int addMem(struct Process process);
+
 int memory(int size, int PID);
 
-// note add to ready -> run => ptr->runningC ++;
-// node add to run  -> wait => && ptr->IO_Frequency != 0 &&
 
 int readyLen = 0, runningLen = 0, waitingLen = 0, tick = 0;
 int storageLen = 0;
@@ -65,50 +72,21 @@ int storageLen = 0;
 //int runningC, waitingC;
 int main() {
     clearStats();
-    char strScheduler[20];
-    int scheduler = 0;
-    while(scheduler == 0){
-        printf("Scheduler to use: fcfs, ep, rr ?\n");
-        fgets(strScheduler,20,stdin);
-        if (strstr(strScheduler, "fcfs") != NULL) {
-            scheduler = 1;
-        }
-        else if (strstr(strScheduler, "ep") != NULL) {
-            scheduler = 2;
-        }
-        else if (strstr(strScheduler, "rr") != NULL) {
-            scheduler = 3;
-        }
-        else {
-            printf("Wrong choice ?\n");
-        }
-    }
+
 
     clearOutput();
-    int i = 0;
-    switch(scheduler){
-        case 1:
-//            for (int i=0; i<runningLen; i++, ptr++ ) {
-            readFile(1, i);
-            fcfs();
-//            printStatsFile(1);
-            break;
-        case 2:
-            readFile(2, i);
-            ep();
-//            printStatsFile(2);
-            break;
-        case 3:
-            readFile(3, i);
-            rr();
-//            printStatsFile(3);
-            break;
-    }
+    initMem();
+    readFile(1, 0);
+    fcfs();
 
 
     return 0;
 }
-
+/**
+ *  When going from RUNNING -> TERMINATED, RUNNING -> WAITING, the process pid is removed from the mem
+ *  When going from READY -> RUNNING this will only happen if addmem returns a positive value that corresponds to a partition
+ *  this doesnt work because pointers have hurt my feelings. please help my decrepit soul and let us use java.
+ */
 void fcfs(){
     // to make sure max only one transition per tick
     int breakout = 0;
@@ -123,6 +101,7 @@ void fcfs(){
                 if (ptr->runningC >= ptr->Total_CPU_Time  && breakout == 0){
                     printf("%i -> terminate: %i\n",tick, ptr->PID);
                     printFile(tick, ptr->PID, "RUNNING", "TERMINATED");
+                    removeMem(*ptr);
                     terminate(ptr->PID, 1);
                     breakout = 1;
                 }
@@ -130,6 +109,7 @@ void fcfs(){
                 else if (ptr->runningC > 0 && ptr->IO_Frequency != 0 && ptr->runningC % ptr->IO_Frequency == 0  && breakout == 0) {
                     printf("%i -> wait: %i\n",tick, ptr->PID);
                     printFile(tick, ptr->PID, "RUNNING", "WAITING");
+                    removeMem(*ptr);
                     // the processes is moved to waiting
                     wait(ptr->PID);
                     breakout = 1;
@@ -150,190 +130,20 @@ void fcfs(){
                     printf("%i -> admitted: %i\n",tick, ptr->PID);
                 }
                 // if the running array is empty and the tick is after the arrival time and there has not been a action preformed yet
-                if (runningLen == 0 && tick >= ptr->Arrival_Time  && breakout == 0) {
-                    printf("%i -> dispatch: %i\n",tick, ptr->PID);
-                    printFile(tick, ptr->PID, "READY", "RUNNING");
-                    // first tick it is in running for it counts
-                    ptr->runningC ++;
-                    // move the process to running
-                    dispatch(ptr->PID);
-                    breakout = 1;
+                if (runningLen == 0 && tick >= ptr->Arrival_Time  && breakout == 0 ) {
+                    int index = addMem(*ptr);
+                    if (index != -1){
+                        ptr->partition = index;
+                        printf("%i -> dispatch: %i\n",tick, ptr->PID);
+                        printFile(tick, ptr->PID, "READY", "RUNNING");
+                        // first tick it is in running for it counts
+                        ptr->runningC ++;
+                        // move the process to running
+                        dispatch(ptr->PID);
+                        breakout = 1;
+                    }
 
 
-                }
-            }
-        }
-
-        // if there is processes in the waiting array
-        if(waitingLen > 0){
-            struct Process* ptr = waiting;
-            for (int i=0; i<waitingLen; i++, ptr++ ) {
-                // if the process didnt just start and is the time waiting for io is divisible by the io duration
-                if (ptr->waitingC > 0 && ptr->waitingC % ptr->IO_Duration == 0  && breakout == 0) {
-                    printf("%i -> done: %i\n",tick, ptr->PID);
-                    printFile(tick, ptr->PID, "WAITING", "READY");
-                    // move to ready
-                    done(ptr->PID);
-                    breakout = 1;
-                }
-                // each process in waiting increases
-                ptr->waitingC ++;
-
-            }
-        }
-        tick++;
-    }
-}
-
-void ep(){
-    // to make sure max only one transition per tick
-    int breakout = 0;
-    // loops for each tick
-    while(tick < ticks){
-        breakout = 0;
-        // if there is process in the running array, should never be more than one
-        if(runningLen > 0){
-            struct Process* ptr = running;
-            for (int i=0; i<runningLen; i++, ptr++ ) {
-                // if the running count for the process greater than the total cpu time and no other action has happened
-                if (ptr->runningC >= ptr->Total_CPU_Time && breakout == 0){
-                    printf("%i -> terminate: %i\n",tick, ptr->PID);
-                    printFile(tick, ptr->PID, "RUNNING", "TERMINATED");
-                    terminate(ptr->PID, 2);
-                    breakout = 1;
-                }
-                    // if the process didnt just start and it is evenly divisible by the io frequency and no other action has happnened
-                else if (ptr->runningC > 0 && ptr->IO_Frequency != 0 && ptr->runningC % ptr->IO_Frequency == 0  && breakout == 0) {
-                    printf("%i -> wait: %i\n",tick, ptr->PID);
-                    printFile(tick, ptr->PID, "RUNNING", "WAITING");
-                    // the processes is moved to waiting
-                    wait(ptr->PID);
-                    breakout = 1;
-                }
-                ptr->runningC ++;
-
-
-
-            }
-        }
-        // if there are processes in the ready array
-        if(readyLen > 0){
-            // go through all the processes
-            struct Process* ptr = ready;
-            int priorities = arrlen;
-
-            for (int i=0; i<readyLen; i++, ptr++ ) {
-                if (ptr->priority < priorities) {
-                    priorities = ptr->priority;
-                }
-            }
-
-            ptr = ready;
-
-            for (int i=0; i<readyLen; i++, ptr++ ) {
-                if(ptr->Arrival_Time == tick){
-                    data[ptr->PID].startWait = tick;
-                    printf("%i -> admitted: %i\n",tick, ptr->PID);
-                }
-                // if the running array is empty and the tick is after the arrival time and there has not been a action preformed yet
-                if (runningLen == 0 && tick >= ptr->Arrival_Time  && breakout == 0 && ptr->priority == priorities) {
-                    printf("%i -> dispatch: %i\n",tick, ptr->PID);
-                    printFile(tick, ptr->PID, "READY", "RUNNING");
-                    // first tick it is in running for it counts
-                    ptr->runningC ++;
-
-                    // move the process to running
-                    dispatch(ptr->PID);
-                    breakout = 1;
-
-                }
-            }
-        }
-
-        // if there is processes in the waiting array
-        if(waitingLen > 0){
-            struct Process* ptr = waiting;
-            for (int i=0; i<waitingLen; i++, ptr++ ) {
-                // if the process didnt just start and is the time waiting for io is divisible by the io duration
-                if (ptr->waitingC > 0 && ptr->waitingC % ptr->IO_Duration == 0  && breakout == 0) {
-                    printf("%i -> done: %i\n",tick, ptr->PID);
-                    printFile(tick, ptr->PID, "WAITING", "READY");
-                    // move to ready
-                    done(ptr->PID);
-                    breakout = 1;
-                }
-                // each process in waiting increases
-                ptr->waitingC ++;
-
-            }
-        }
-        tick++;
-    }
-}
-
-void rr(){
-    // to make sure max only one transition per tick
-    int breakout = 0;
-    int run = 0;
-    // loops for each tick
-    while(tick < ticks){
-        breakout = 0;
-        // if there is process in the running array, should never be more than one
-        if(runningLen > 0){
-            struct Process* ptr = running;
-            for (int i=0; i<runningLen; i++, ptr++ ) {
-
-                // if the running count for the process greater than the total cpu time and no other action has happened
-                if (ptr->runningC >= ptr->Total_CPU_Time  && breakout == 0){
-                    printf("%i -> terminate: %i\n",tick, ptr->PID);
-                    printFile(tick, ptr->PID, "RUNNING", "TERMINATED");
-                    terminate(ptr->PID, 3);
-                    breakout = 1;
-                    run = 0;
-                }
-                // if the process has been for longer than the quantum consecutively
-                else if (run >= quantum && breakout == 0 ){
-                    printf("%i -> interrupt: %i\n",tick, ptr->PID);
-                    printFile(tick, ptr->PID, "RUNNING", "READY");
-                    // the processes is moved to waiting
-                    interrupt(ptr->PID);
-                    breakout = 1;
-                    run = 0;
-                }
-                    // if the process didnt just start and it is evenly divisible by the io frequency and no other action has happened
-                else if (ptr->runningC > 0 && ptr->IO_Frequency != 0 && ptr->runningC % ptr->IO_Frequency == 0  && breakout == 0) {
-                    printf("%i -> wait: %i\n",tick, ptr->PID);
-                    printFile(tick, ptr->PID, "RUNNING", "WAITING");
-                    // the processes is moved to waiting
-                    wait(ptr->PID);
-                    breakout = 1;
-                    run = 0;
-                }
-                ptr->runningC ++;
-                run ++;
-
-
-
-            }
-        }
-        // if there are processes in the ready array
-        if(readyLen > 0){
-            // go through all the processes
-            struct Process* ptr = ready;
-            for (int i=0; i<readyLen; i++, ptr++ ) {
-                if(ptr->Arrival_Time == tick){
-                    data[ptr->PID].startWait = tick;
-                    printf("%i -> admitted: %i\n",tick, ptr->PID);
-                }
-                // if the running array is empty and the tick is after the arrival time and there has not been a action preformed yet
-                if (runningLen == 0 && tick >= ptr->Arrival_Time  && breakout == 0) {
-                    printf("%i -> dispatch: %i\n",tick, ptr->PID);
-                    printFile(tick, ptr->PID, "READY", "RUNNING");
-                    // first tick it is in running for it counts
-                    ptr->runningC ++;
-                    // move the process to running
-                    dispatch(ptr->PID);
-                    breakout = 1;
 
                 }
             }
@@ -376,7 +186,6 @@ void admitted(struct Process process) {
 void dispatch(int PID) {
     // ready -> running
     // goes through each process in the ready array
-     printf("%i -----------------------> %i\n", PID, tick-data[PID].startWait);
     data[PID].totalWait += tick-data[PID].startWait;
     struct Process* ptr = ready;
     for (int i=0; i<readyLen; i++, ptr++ ) {
@@ -562,23 +371,38 @@ void clearOutput()
     fclose (file);
 }
 
+
+/**
+ * adds the process into the first free memory partition
+ *
+ * note: can't figure out how to actually change the storage values.
+ *
+ */
 int addMem(struct Process process){
+    printf("%i, %i, %i, %i, %i \n", usedMem(), freePart(), freeMem(), usableMem(), usedMem()  );
     struct Partition* ptr = storage;
-    int filled = 0;
-    for (int i=0; i<storageLen; i++, ptr++ ) {
-        if(filled == 0 && storage->used == 0 && storage->size >= process.size){
-            storage->used = process.size;
-            storage->PID = process.PID;
-            filled = 1;
+    printf("%i\n", storageLen);
+    for (int i=0; i<storageLen; i++ ) {
+        if(ptr->used == 0 && ptr->size >= process.size){
+
+            ptr->used = process.size;
+            ptr->PID = process.PID;
+            return i;
         }
     }
+    return -1;
 }
+
+/**
+ *  removes the process from the partition associated with the pid
+ * @param process
+ */
 void removeMem(struct Process process){
     struct Partition* ptr = storage;
     for (int i=0; i<storageLen; i++, ptr++ ) {
-        if(storage->PID == process.PID){
-            storage->used = 0;
-            storage->PID = 0;
+        if(ptr->PID == process.PID){
+            ptr->used = 0;
+            ptr->PID = 0;
         }
     }
 }
@@ -586,15 +410,41 @@ int usedMem(){
     int used = 0;
     struct Partition* ptr = storage;
     for (int i=0; i<storageLen; i++, ptr++ ) {
-        used += storage->used;
+        used += ptr->used;
     }
+    return used;
+}
+int usableMem(){
+    int usable = 0;
+    struct Partition* ptr = storage;
+    for (int i=0; i<storageLen; i++, ptr++ ) {
+        if (ptr->used == 0) usable += ptr->size;
+    }
+    return usable;
 }
 int freeMem(){
     int free = 0;
     struct Partition* ptr = storage;
     for (int i=0; i<storageLen; i++, ptr++ ) {
-        if (storage->used == 0) free += storage->size;
+        free += ptr->size - ptr->used;
     }
+    return free;
+}
+int freePart(){
+    int free = 0;
+    struct Partition* ptr = storage;
+    for (int i=0; i<storageLen; i++, ptr++ ) {
+        if (ptr->used == 0) free++;
+    }
+    return free;
+}
+int usedPart(){
+    int used = 0;
+    struct Partition* ptr = storage;
+    for (int i=0; i<storageLen; i++, ptr++ ) {
+        if (ptr->used != 0) used++;
+    }
+    return used;
 }
 void initMem(){
     struct Partition p1, p2, p3, p4;

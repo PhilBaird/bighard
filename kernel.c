@@ -30,7 +30,7 @@ void remove_element(struct Process array[arrlen], int index, int array_length);
 void printStatsFile(int type);
 void admitted(struct Process process);
 
-void terminate(int PID);
+void terminate(int PID, int type);
 void clearStats();
 void wait(int PID);
 
@@ -86,17 +86,17 @@ int main() {
 //            for (int i=0; i<runningLen; i++, ptr++ ) {
             readFile(1, i);
             fcfs();
-            printStatsFile(1);
+//            printStatsFile(1);
             break;
         case 2:
             readFile(2, i);
             ep();
-            printStatsFile(2);
+//            printStatsFile(2);
             break;
         case 3:
             readFile(3, i);
             rr();
-            printStatsFile(3);
+//            printStatsFile(3);
             break;
     }
 
@@ -118,7 +118,7 @@ void fcfs(){
                 if (ptr->runningC >= ptr->Total_CPU_Time  && breakout == 0){
                     printf("%i -> terminate: %i\n",tick, ptr->PID);
                     printFile(tick, ptr->PID, "RUNNING", "TERMINATED");
-                    terminate(ptr->PID);
+                    terminate(ptr->PID, 1);
                     breakout = 1;
                 }
                     // if the process didnt just start and it is evenly divisible by the io frequency and no other action has happnened
@@ -191,7 +191,7 @@ void ep(){
                 if (ptr->runningC >= ptr->Total_CPU_Time && breakout == 0){
                     printf("%i -> terminate: %i\n",tick, ptr->PID);
                     printFile(tick, ptr->PID, "RUNNING", "TERMINATED");
-                    terminate(ptr->PID);
+                    terminate(ptr->PID, 2);
                     breakout = 1;
                 }
                     // if the process didnt just start and it is evenly divisible by the io frequency and no other action has happnened
@@ -276,7 +276,7 @@ void rr(){
                 if (ptr->runningC >= ptr->Total_CPU_Time  && breakout == 0){
                     printf("%i -> terminate: %i\n",tick, ptr->PID);
                     printFile(tick, ptr->PID, "RUNNING", "TERMINATED");
-                    terminate(ptr->PID);
+                    terminate(ptr->PID, 3);
                     breakout = 1;
                     run = 0;
                 }
@@ -352,7 +352,8 @@ void rr(){
 void admitted(struct Process process) {
     // arrival -> ready
     printf("loaded: %i\n", process.PID);
-    data[process.PID-1].arrivalTime = tick;
+    data[process.PID].arrivalTime = process.Arrival_Time;
+    data[process.PID].totalWait = 0;
     // adds process to the end of the ready array
     ready[readyLen] = process;
     readyLen ++;
@@ -361,7 +362,8 @@ void admitted(struct Process process) {
 void dispatch(int PID) {
     // ready -> running
     // goes through each process in the ready array
-    data[PID-1].totalWait += tick-data[PID].startWait;
+    printf("-----------------------> %i\n", tick-data[PID].startWait);
+    data[PID].totalWait += tick-data[PID].startWait;
     struct Process* ptr = ready;
     for (int i=0; i<readyLen; i++, ptr++ ) {
         // finds the matching pid
@@ -380,6 +382,7 @@ void dispatch(int PID) {
 
 void wait(int PID){
     // running -> waiting
+    data[PID].startWait = tick;
     struct Process* ptr = running;
     for (int i=0; i<runningLen; i++, ptr++ ) {
         if(ptr->PID == PID){
@@ -406,7 +409,7 @@ void done(int PID){
 
 void interrupt(int PID){
     // running -> ready
-    data[PID-1].startWait =tick;
+    data[PID].startWait = tick;
     struct Process* ptr = running;
     for (int i=0; i<runningLen; i++, ptr++ ) {
         if(ptr->PID == PID){
@@ -418,9 +421,9 @@ void interrupt(int PID){
     }
 }
 
-void terminate(int PID){
+void terminate(int PID, int type){
     // running -> Done
-    data[PID-1].executedTime = tick;
+    data[PID].executedTime = tick;
     struct Process* ptr = running;
     for (int i=0; i<runningLen; i++, ptr++ ) {
         if(ptr->PID == PID){
@@ -429,7 +432,7 @@ void terminate(int PID){
         }
     }
     if(readyLen == 0 && waitingLen == 0){
-        printStatsFile(0);
+        printStatsFile(type);
     }
 }
 
@@ -499,19 +502,36 @@ void printFile(int t, int PID, char *s1, char *s2)
     fclose (file);
 }
 void printStatsFile(int type){
+    char algorithm[20] = "";
+    switch(type){
+        case 1:
+            sprintf(algorithm, "FCFS");
+//            algorithm = "FCFS";
+            break;
+        case 3:
+            sprintf(algorithm, "RR");
+//            algorithm = "RR";
+            break;
+        case 2: sprintf(algorithm, "EP");
+//            algorithm = "EP";
+            break;
+        default: sprintf(algorithm, "Yikes");
+//            algorithm = "Yikes";
+            break;
+
+    }
 
     int count = 0;
     FILE* file = fopen ("Stats.txt", "a");
-    printf("Currently using %i algorithm\n", type);
+    fprintf(file,"Currently using %s algorithm\n", algorithm);
     for(int i = 0; i < (sizeof(data)/sizeof(data[0])); i++ ){
         if(data[i].executedTime != 0) {
-            fprintf(file, "%d. turnaround: %d,  time waited: %d  \n", i, (data[i].executedTime - data[i].arrivalTime),data[i].totalWait);
+            fprintf(file, "%d. turnaround: %d,  time waited: %d  \n", i, (data[i].executedTime - data[i].arrivalTime), data[i].totalWait);
             count++;
-
         }
 
     }
-    fprintf(file,"Average throughput was %d", tick/count);
+    fprintf(file,"Average throughput was %d\n", tick/count);
     fclose(file);
 
 

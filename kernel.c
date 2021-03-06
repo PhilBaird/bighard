@@ -12,6 +12,7 @@
 #define arrlen 20
 #define ticks 120
 #define quantum 3
+#define testnum 2
 #define input "input_0.txt"
 #define output "output.txt"
 
@@ -80,22 +81,36 @@ int main() {
     }
 
     clearOutput();
-    int i = 0;
+    int i = testnum;
     switch(scheduler){
         case 1:
-//            for (int i=0; i<runningLen; i++, ptr++ ) {
             readFile(1, i);
             fcfs();
+//            for (int i=0; i<9; i++ ) {
+//                readFile(1, i);
+//                fcfs();
+//                tick = 0;
+//            }
 //            printStatsFile(1);
             break;
         case 2:
             readFile(2, i);
             ep();
+//            for (int i=0; i<9; i++ ) {
+//                readFile(2, i);
+//                ep();
+//                tick = 0;
+//            }
 //            printStatsFile(2);
             break;
         case 3:
             readFile(3, i);
             rr();
+//            for (int i=0; i<9; i++ ) {
+//                readFile(3, i);
+//                rr();
+//                tick = 0;
+//            }
 //            printStatsFile(3);
             break;
     }
@@ -180,6 +195,9 @@ void fcfs(){
     }
 }
 
+/**
+ *  finds the highest priority in the ready queue and takes the first task of the priority
+ */
 void ep(){
     // to make sure max only one transition per tick
     int breakout = 0;
@@ -215,8 +233,10 @@ void ep(){
         if(readyLen > 0){
             // go through all the processes
             struct Process* ptr = ready;
+            // highest priority is the length of the queue
             int priorities = arrlen;
 
+            // finds the highest priority
             for (int i=0; i<readyLen; i++, ptr++ ) {
                 if (ptr->priority < priorities) {
                     priorities = ptr->priority;
@@ -224,13 +244,13 @@ void ep(){
             }
 
             ptr = ready;
-
             for (int i=0; i<readyLen; i++, ptr++ ) {
                 if(ptr->Arrival_Time == tick){
                     data[ptr->PID].startWait = tick;
                     printf("%i -> admitted: %i\n",tick, ptr->PID);
                 }
                 // if the running array is empty and the tick is after the arrival time and there has not been a action preformed yet
+                // and if the priority is the same as the highest
                 if (runningLen == 0 && tick >= ptr->Arrival_Time  && breakout == 0 && ptr->priority == priorities) {
                     printf("%i -> dispatch: %i\n",tick, ptr->PID);
                     printFile(tick, ptr->PID, "READY", "RUNNING");
@@ -266,6 +286,10 @@ void ep(){
     }
 }
 
+/**
+ *  counter that counts when there is a task in the running queue, this is reset when a task leaves the running queue
+ *  when this counter reaches the quantum the task it moved from the running to ready queue
+ */
 void rr(){
     // to make sure max only one transition per tick
     int breakout = 0;
@@ -371,7 +395,6 @@ void admitted(struct Process process) {
 void dispatch(int PID) {
     // ready -> running
     // goes through each process in the ready array
-     printf("%i -----------------------> %i\n", PID, tick-data[PID].startWait);
     data[PID].totalWait += tick-data[PID].startWait;
     struct Process* ptr = ready;
     for (int i=0; i<readyLen; i++, ptr++ ) {
@@ -440,6 +463,7 @@ void terminate(int PID, int type){
             runningLen --;
         }
     }
+    // if at the end and no tasks left in queues
     if(readyLen == 0 && waitingLen == 0){
         printStatsFile(type);
     }
@@ -453,22 +477,12 @@ void remove_element(struct Process array[arrlen], int index, int array_length) {
 }
 
 /**
- * reads in file from the input filename
+ * reads in file from the input filename, with priority
  */
 void readFile(int type, int run)
 {
     char fileName [20] = "";
-    switch (type){
-        case 1:
-            sprintf(fileName, "data/rr/input_%i.txt",  run);
-            break;
-        case 2:
-            sprintf(fileName, "data/rr/input_%i.txt",run);
-            break;
-        case 3:
-            sprintf(fileName, "data/rr/input_%i.txt", run);
-            break;
-    }
+    sprintf(fileName, "input_%i.txt", run);
     FILE* file = fopen (fileName , "r");
     int i,i1,i2,i3,i4,i5 = 0;
     while (!feof (file))
@@ -506,6 +520,15 @@ void printFile(int t, int PID, char *s1, char *s2)
     fprintf (file, "%d %d %s %s\n", t, PID, s1, s2);
     fclose (file);
 }
+/**
+ * prints the stats to the stats file
+ *
+ * this is run when the ready, waiting and running queues are empty after a terminate
+ * the total time is sum (ready->running) - (running->waiting or running->ready or ready @ arrival time) (ticks)
+ * executed time is (running->terminated) - (arrival)
+ *
+ *
+ */
 void printStatsFile(int type){
     char algorithm[20] = "";
     switch(type){
@@ -531,7 +554,7 @@ void printStatsFile(int type){
     fprintf(file,"Currently using %s algorithm\n", algorithm);
     for(int i = 0; i < (sizeof(data)/sizeof(data[0])); i++ ){
         if(data[i].executedTime != 0) {
-            fprintf(file, "%d. turnaround: %d,  time waited: %d  \n", i, (data[i].executedTime - data[i].arrivalTime), data[i].totalWait - data[i].arrivalTime);
+            fprintf(file, "%d. turnaround: %d,  time waited: %d  \n", i, (data[i].executedTime - data[i].arrivalTime), data[i].totalWait);
             count++;
         }
 
@@ -541,6 +564,9 @@ void printStatsFile(int type){
 
 
 }
+/**
+ *  clears the stats file
+ */
 void clearStats()
 {
 FILE* file = fopen ("Stats.txt", "w");

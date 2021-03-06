@@ -16,14 +16,18 @@
 #define output "output.txt"
 
 struct Process {
-    int PID, Arrival_Time, Total_CPU_Time, IO_Frequency, IO_Duration, runningC, waitingC, priority;
+    int PID, Arrival_Time, Total_CPU_Time, IO_Frequency, IO_Duration, runningC, waitingC, priority, size, partition;
 };
 struct ProcessData{
     int startWait, totalWait, arrivalTime, executedTime;
 };
+struct Partition{
+    int size, PID, used;
+};
 
 struct Process ready[arrlen], running[arrlen], waiting[arrlen];
 struct ProcessData data[arrlen];
+struct Partition storage[4];
 
 
 void remove_element(struct Process array[arrlen], int index, int array_length);
@@ -47,15 +51,16 @@ void clearOutput();
 void printFile(int t, int PID, char *s1, char *s2);
 
 void fcfs();
-
 void ep();
-
 void rr();
+
+int memory(int size, int PID);
 
 // note add to ready -> run => ptr->runningC ++;
 // node add to run  -> wait => && ptr->IO_Frequency != 0 &&
 
 int readyLen = 0, runningLen = 0, waitingLen = 0, tick = 0;
+int storageLen = 0;
 //int PID, Arrival_Time, Total_CPU_Time, IO_Frequency, IO_Duration;
 //int runningC, waitingC;
 int main() {
@@ -470,10 +475,10 @@ void readFile(int type, int run)
             break;
     }
     FILE* file = fopen (fileName , "r");
-    int i,i1,i2,i3,i4,i5 = 0;
+    int i,i1,i2,i3,i4,i5,i6 = 0;
     while (!feof (file))
     {
-        fscanf (file, "%d %d %d %d %d %d", &i, &i1, &i2, &i3, &i4, &i5);
+        fscanf (file, "%d %d %d %d %d %d %d", &i, &i1, &i2, &i3, &i4, &i5, &i6);
 
 //        printf ("\n%d %d %d %d %d\n", i, i1, i2, i3, i4);
         struct Process p1;
@@ -485,6 +490,7 @@ void readFile(int type, int run)
         p1.runningC = 0;
         p1.waitingC = 0;
         p1.priority = i5;
+        p1.size = i6;
 
         admitted(p1);
 
@@ -554,6 +560,64 @@ void clearOutput()
 {
     FILE* file = fopen (output, "w");
     fclose (file);
+}
+
+int addMem(struct Process process){
+    struct Partition* ptr = storage;
+    int filled = 0;
+    for (int i=0; i<storageLen; i++, ptr++ ) {
+        if(filled == 0 && storage->used == 0 && storage->size >= process.size){
+            storage->used = process.size;
+            storage->PID = process.PID;
+            filled = 1;
+        }
+    }
+}
+void removeMem(struct Process process){
+    struct Partition* ptr = storage;
+    for (int i=0; i<storageLen; i++, ptr++ ) {
+        if(storage->PID == process.PID){
+            storage->used = 0;
+            storage->PID = 0;
+        }
+    }
+}
+int usedMem(){
+    int used = 0;
+    struct Partition* ptr = storage;
+    for (int i=0; i<storageLen; i++, ptr++ ) {
+        used += storage->used;
+    }
+}
+int freeMem(){
+    int free = 0;
+    struct Partition* ptr = storage;
+    for (int i=0; i<storageLen; i++, ptr++ ) {
+        if (storage->used == 0) free += storage->size;
+    }
+}
+void initMem(){
+    struct Partition p1, p2, p3, p4;
+    p1.PID = 0;
+    p1.size = 500;
+    p1.used = 0;
+    p2.PID = 0;
+    p2.size = 250;
+    p2.used = 0;
+    p3.PID = 0;
+    p3.size = 150;
+    p3.used = 0;
+    p4.PID = 0;
+    p4.size = 100;
+    p4.used = 0;
+    storage[storageLen] = p1;
+    storageLen ++;
+    storage[storageLen] = p2;
+    storageLen ++;
+    storage[storageLen] = p3;
+    storageLen ++;
+    storage[storageLen] = p4;
+    storageLen ++;
 }
 
 

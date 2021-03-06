@@ -140,7 +140,10 @@ void fcfs(){
             // go through all the processes
             struct Process* ptr = ready;
             for (int i=0; i<readyLen; i++, ptr++ ) {
-                if(ptr->Arrival_Time == tick) printf("%i -> admitted: %i\n",tick, ptr->PID);
+                if(ptr->Arrival_Time == tick){
+                    data[ptr->PID].startWait = tick;
+                    printf("%i -> admitted: %i\n",tick, ptr->PID);
+                }
                 // if the running array is empty and the tick is after the arrival time and there has not been a action preformed yet
                 if (runningLen == 0 && tick >= ptr->Arrival_Time  && breakout == 0) {
                     printf("%i -> dispatch: %i\n",tick, ptr->PID);
@@ -223,7 +226,10 @@ void ep(){
             ptr = ready;
 
             for (int i=0; i<readyLen; i++, ptr++ ) {
-                if(ptr->Arrival_Time == tick) printf("%i -> admitted: %i\n",tick, ptr->PID);
+                if(ptr->Arrival_Time == tick){
+                    data[ptr->PID].startWait = tick;
+                    printf("%i -> admitted: %i\n",tick, ptr->PID);
+                }
                 // if the running array is empty and the tick is after the arrival time and there has not been a action preformed yet
                 if (runningLen == 0 && tick >= ptr->Arrival_Time  && breakout == 0 && ptr->priority == priorities) {
                     printf("%i -> dispatch: %i\n",tick, ptr->PID);
@@ -310,7 +316,10 @@ void rr(){
             // go through all the processes
             struct Process* ptr = ready;
             for (int i=0; i<readyLen; i++, ptr++ ) {
-                if(ptr->Arrival_Time == tick) printf("%i -> admitted: %i\n",tick, ptr->PID);
+                if(ptr->Arrival_Time == tick){
+                    data[ptr->PID].startWait = tick;
+                    printf("%i -> admitted: %i\n",tick, ptr->PID);
+                }
                 // if the running array is empty and the tick is after the arrival time and there has not been a action preformed yet
                 if (runningLen == 0 && tick >= ptr->Arrival_Time  && breakout == 0) {
                     printf("%i -> dispatch: %i\n",tick, ptr->PID);
@@ -362,7 +371,7 @@ void admitted(struct Process process) {
 void dispatch(int PID) {
     // ready -> running
     // goes through each process in the ready array
-    printf("-----------------------> %i\n", tick-data[PID].startWait);
+     printf("%i -----------------------> %i\n", PID, tick-data[PID].startWait);
     data[PID].totalWait += tick-data[PID].startWait;
     struct Process* ptr = ready;
     for (int i=0; i<readyLen; i++, ptr++ ) {
@@ -451,26 +460,22 @@ void readFile(int type, int run)
     char fileName [20] = "";
     switch (type){
         case 1:
-            sprintf(fileName, "data/fcfs/input_%i.txt",  run);
+            sprintf(fileName, "data/rr/input_%i.txt",  run);
             break;
         case 2:
-            sprintf(fileName, "data/ep/input_%i.txt",run);
+            sprintf(fileName, "data/rr/input_%i.txt",run);
             break;
         case 3:
             sprintf(fileName, "data/rr/input_%i.txt", run);
             break;
     }
     FILE* file = fopen (fileName , "r");
-    int i,i1,i2,i3,i4, i5 = 0;
+    int i,i1,i2,i3,i4,i5 = 0;
     while (!feof (file))
     {
+        fscanf (file, "%d %d %d %d %d %d", &i, &i1, &i2, &i3, &i4, &i5);
 
-        if (type == 2){
-            fscanf (file, "%d %d %d %d %d %d", &i, &i1, &i2, &i3, &i4, &i5);
-        }else{
-            fscanf (file, "%d %d %d %d %d", &i, &i1, &i2, &i3, &i4);
-        }
-        //printf ("\n%d %d %d %d %d\n", i, i1, i2, i3, i4);
+//        printf ("\n%d %d %d %d %d\n", i, i1, i2, i3, i4);
         struct Process p1;
         p1.PID = i;
         p1.Arrival_Time = i1;
@@ -526,7 +531,7 @@ void printStatsFile(int type){
     fprintf(file,"Currently using %s algorithm\n", algorithm);
     for(int i = 0; i < (sizeof(data)/sizeof(data[0])); i++ ){
         if(data[i].executedTime != 0) {
-            fprintf(file, "%d. turnaround: %d,  time waited: %d  \n", i, (data[i].executedTime - data[i].arrivalTime), data[i].totalWait);
+            fprintf(file, "%d. turnaround: %d,  time waited: %d  \n", i, (data[i].executedTime - data[i].arrivalTime), data[i].totalWait - data[i].arrivalTime);
             count++;
         }
 

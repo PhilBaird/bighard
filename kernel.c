@@ -27,11 +27,11 @@ struct ProcessData data[arrlen];
 
 
 void remove_element(struct Process array[arrlen], int index, int array_length);
-
+void printStatsFile(char type);
 void admitted(struct Process process);
 
 void terminate(int PID);
-
+void clearStats();
 void wait(int PID);
 
 void dispatch(int PID);
@@ -341,7 +341,7 @@ void rr(){
 void admitted(struct Process process) {
     // arrival -> ready
     printf("admitted: %i\n", process.PID);
-    data[process.PID].arrivalTime = tick;
+    data[process.PID-1].arrivalTime = tick;
     // adds process to the end of the ready array
     ready[readyLen] = process;
     readyLen ++;
@@ -350,7 +350,7 @@ void admitted(struct Process process) {
 void dispatch(int PID) {
     // ready -> running
     // goes through each process in the ready array
-    data[PID].totalWait += tick-data[PID].startWait;
+    data[PID-1].totalWait += tick-data[PID].startWait;
     struct Process* ptr = ready;
     for (int i=0; i<readyLen; i++, ptr++ ) {
         // finds the matching pid
@@ -397,7 +397,7 @@ void done(int PID){
 
 void interrupt(int PID){
     // running -> ready
-    data[PID].startWait =tick;
+    data[PID-1].startWait =tick;
     struct Process* ptr = running;
     for (int i=0; i<runningLen; i++, ptr++ ) {
         if(ptr->PID == PID){
@@ -411,13 +411,16 @@ void interrupt(int PID){
 
 void terminate(int PID){
     // running -> Done
-    data[PID].executedTime = tick;
+    data[PID-1].executedTime = tick;
     struct Process* ptr = running;
     for (int i=0; i<runningLen; i++, ptr++ ) {
         if(ptr->PID == PID){
             remove_element(running, i, runningLen);
             runningLen --;
         }
+    }
+    if(readyLen == 0 && waitingLen == 0){
+        printStatsFile();
     }
 }
 /**
@@ -466,6 +469,29 @@ void printFile(int t, int PID, char *s1, char *s2)
     FILE* file = fopen (output+'_', "a");
     fprintf (file, "%d %d %s %s\n", t, PID, s1, s2);
     fclose (file);
+}
+void printStatsFile(char type){
+    clearStats();
+    int count = 0;
+    FILE* file = fopen ("Stats.txt", "a");
+    printf("Currently using %s algorithm\n", type);
+    for(int i = 0; i < (sizeof(data)/sizeof(data[0])); i++ ){
+        if(data[i].executedTime != 0) {
+            fprintf(file, "%d. turnaround: %d,  time waited: %d  \n", i, (data[i].executedTime - data[i].arrivalTime),data[i].totalWait);
+            count++;
+
+        }
+
+    }
+    fprintf(file,"Average throughput was %d", tick/count);
+    fclose(file);
+
+
+}
+void clearStats()
+{
+FILE* file = fopen ("Stats.txt", "w");
+fclose (file);
 }
 
 /**

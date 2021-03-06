@@ -12,7 +12,7 @@
 #define arrlen 20
 #define ticks 120
 #define quantum 3
-#define input "input.txt"
+#define input "input_0.txt"
 #define output "output.txt"
 
 struct Process {
@@ -27,7 +27,7 @@ struct ProcessData data[arrlen];
 
 
 void remove_element(struct Process array[arrlen], int index, int array_length);
-void printStatsFile(char type);
+void printStatsFile(int type);
 void admitted(struct Process process);
 
 void terminate(int PID);
@@ -40,7 +40,7 @@ void done(int PID);
 
 void interrupt(int PID);
 
-void readFile();
+void readFile(int type, int test);
 
 void clearOutput();
 
@@ -59,7 +59,7 @@ int readyLen = 0, runningLen = 0, waitingLen = 0, tick = 0;
 //int PID, Arrival_Time, Total_CPU_Time, IO_Frequency, IO_Duration;
 //int runningC, waitingC;
 int main() {
-
+    clearStats();
     char strScheduler[20];
     int scheduler = 0;
     while(scheduler == 0){
@@ -80,19 +80,23 @@ int main() {
     }
 
     clearOutput();
+    int i = 0;
     switch(scheduler){
         case 1:
 //            for (int i=0; i<runningLen; i++, ptr++ ) {
-            readFile();
+            readFile(1, i);
             fcfs();
+            printStatsFile(1);
             break;
         case 2:
-            readFile();
+            readFile(2, i);
             ep();
+            printStatsFile(2);
             break;
         case 3:
-            readFile();
+            readFile(3, i);
             rr();
+            printStatsFile(3);
             break;
     }
 
@@ -136,6 +140,7 @@ void fcfs(){
             // go through all the processes
             struct Process* ptr = ready;
             for (int i=0; i<readyLen; i++, ptr++ ) {
+                if(ptr->Arrival_Time == tick) printf("%i -> admitted: %i\n",tick, ptr->PID);
                 // if the running array is empty and the tick is after the arrival time and there has not been a action preformed yet
                 if (runningLen == 0 && tick >= ptr->Arrival_Time  && breakout == 0) {
                     printf("%i -> dispatch: %i\n",tick, ptr->PID);
@@ -183,14 +188,14 @@ void ep(){
             struct Process* ptr = running;
             for (int i=0; i<runningLen; i++, ptr++ ) {
                 // if the running count for the process greater than the total cpu time and no other action has happened
-                if (ptr->runningC >= ptr->Total_CPU_Time  && breakout == 0){
+                if (ptr->runningC >= ptr->Total_CPU_Time && breakout == 0){
                     printf("%i -> terminate: %i\n",tick, ptr->PID);
                     printFile(tick, ptr->PID, "RUNNING", "TERMINATED");
                     terminate(ptr->PID);
                     breakout = 1;
                 }
                     // if the process didnt just start and it is evenly divisible by the io frequency and no other action has happnened
-                else if (ptr->runningC > 0 && ptr->runningC % ptr->IO_Frequency == 0  && breakout == 0) {
+                else if (ptr->runningC > 0 && ptr->IO_Frequency != 0 && ptr->runningC % ptr->IO_Frequency == 0  && breakout == 0) {
                     printf("%i -> wait: %i\n",tick, ptr->PID);
                     printFile(tick, ptr->PID, "RUNNING", "WAITING");
                     // the processes is moved to waiting
@@ -212,14 +217,20 @@ void ep(){
             for (int i=0; i<readyLen; i++, ptr++ ) {
                 if (ptr->priority < priorities) {
                     priorities = ptr->priority;
-
                 }
             }
+
+            ptr = ready;
+
             for (int i=0; i<readyLen; i++, ptr++ ) {
+                if(ptr->Arrival_Time == tick) printf("%i -> admitted: %i\n",tick, ptr->PID);
                 // if the running array is empty and the tick is after the arrival time and there has not been a action preformed yet
-                if (runningLen == 0 && tick >= ptr->Arrival_Time  && breakout == 0 && ptr-> priority == priorities) {
+                if (runningLen == 0 && tick >= ptr->Arrival_Time  && breakout == 0 && ptr->priority == priorities) {
                     printf("%i -> dispatch: %i\n",tick, ptr->PID);
                     printFile(tick, ptr->PID, "READY", "RUNNING");
+                    // first tick it is in running for it counts
+                    ptr->runningC ++;
+
                     // move the process to running
                     dispatch(ptr->PID);
                     breakout = 1;
@@ -271,7 +282,7 @@ void rr(){
                 }
                 // if the process has been for longer than the quantum consecutively
                 else if (run >= quantum && breakout == 0 ){
-                    printf("%i -> kicked: %i ------> %i \n",tick, ptr->PID, ptr->runningC+1);
+                    printf("%i -> interrupt: %i\n",tick, ptr->PID);
                     printFile(tick, ptr->PID, "RUNNING", "READY");
                     // the processes is moved to waiting
                     interrupt(ptr->PID);
@@ -299,16 +310,16 @@ void rr(){
             // go through all the processes
             struct Process* ptr = ready;
             for (int i=0; i<readyLen; i++, ptr++ ) {
-
+                if(ptr->Arrival_Time == tick) printf("%i -> admitted: %i\n",tick, ptr->PID);
                 // if the running array is empty and the tick is after the arrival time and there has not been a action preformed yet
                 if (runningLen == 0 && tick >= ptr->Arrival_Time  && breakout == 0) {
                     printf("%i -> dispatch: %i\n",tick, ptr->PID);
                     printFile(tick, ptr->PID, "READY", "RUNNING");
+                    // first tick it is in running for it counts
+                    ptr->runningC ++;
                     // move the process to running
                     dispatch(ptr->PID);
                     breakout = 1;
-                    // the tick it is put into the running queue counts as run time.
-                    ptr->runningC ++;
 
                 }
             }
@@ -340,7 +351,7 @@ void rr(){
 
 void admitted(struct Process process) {
     // arrival -> ready
-    printf("admitted: %i\n", process.PID);
+    printf("loaded: %i\n", process.PID);
     data[process.PID-1].arrivalTime = tick;
     // adds process to the end of the ready array
     ready[readyLen] = process;
@@ -380,8 +391,6 @@ void wait(int PID){
     }
 }
 
-
-
 void done(int PID){
     // waiting -> ready
     struct Process* ptr = waiting;
@@ -420,9 +429,10 @@ void terminate(int PID){
         }
     }
     if(readyLen == 0 && waitingLen == 0){
-        printStatsFile();
+        printStatsFile(0);
     }
 }
+
 /**
  * removes the element at selected index from the array
  */
@@ -433,14 +443,30 @@ void remove_element(struct Process array[arrlen], int index, int array_length) {
 /**
  * reads in file from the input filename
  */
-void readFile()
+void readFile(int type, int run)
 {
-    FILE* file = fopen (input , "r");
-    int i,i1,i2,i3,i4;
+    char fileName [20] = "";
+    switch (type){
+        case 1:
+            sprintf(fileName, "data/fcfs/input_%i.txt",  run);
+            break;
+        case 2:
+            sprintf(fileName, "data/ep/input_%i.txt",run);
+            break;
+        case 3:
+            sprintf(fileName, "data/rr/input_%i.txt", run);
+            break;
+    }
+    FILE* file = fopen (fileName , "r");
+    int i,i1,i2,i3,i4, i5 = 0;
     while (!feof (file))
     {
 
-        fscanf (file, "%d %d %d %d %d", &i, &i1, &i2, &i3, &i4);
+        if (type == 2){
+            fscanf (file, "%d %d %d %d %d %d", &i, &i1, &i2, &i3, &i4, &i5);
+        }else{
+            fscanf (file, "%d %d %d %d %d", &i, &i1, &i2, &i3, &i4);
+        }
         //printf ("\n%d %d %d %d %d\n", i, i1, i2, i3, i4);
         struct Process p1;
         p1.PID = i;
@@ -450,6 +476,8 @@ void readFile()
         p1.IO_Duration = i4;
         p1.runningC = 0;
         p1.waitingC = 0;
+        p1.priority = i5;
+
         admitted(p1);
 
     }
@@ -470,11 +498,11 @@ void printFile(int t, int PID, char *s1, char *s2)
     fprintf (file, "%d %d %s %s\n", t, PID, s1, s2);
     fclose (file);
 }
-void printStatsFile(char type){
-    clearStats();
+void printStatsFile(int type){
+
     int count = 0;
     FILE* file = fopen ("Stats.txt", "a");
-    printf("Currently using %s algorithm\n", type);
+    printf("Currently using %i algorithm\n", type);
     for(int i = 0; i < (sizeof(data)/sizeof(data[0])); i++ ){
         if(data[i].executedTime != 0) {
             fprintf(file, "%d. turnaround: %d,  time waited: %d  \n", i, (data[i].executedTime - data[i].arrivalTime),data[i].totalWait);

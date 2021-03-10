@@ -1,0 +1,63 @@
+Currently using EP algorithm
+1. turnaround: 22,  time waited: 0  
+2. turnaround: 25,  time waited: 14  
+3. turnaround: 35,  time waited: 23  
+4. turnaround: 61,  time waited: 50  
+5. turnaround: 45,  time waited: 31  
+Average throughput was 14
+Currently using EP algorithm
+1. turnaround: 63,  time waited: 58  
+2. turnaround: 24,  time waited: 21  
+3. turnaround: 28,  time waited: 22  
+4. turnaround: 33,  time waited: 28  
+5. turnaround: 40,  time waited: 30  
+6. turnaround: 61,  time waited: 59  
+7. turnaround: 9,  time waited: 0  
+Average throughput was 9
+Currently using EP algorithm
+1. turnaround: 5,  time waited: 0  
+2. turnaround: 3,  time waited: 0  
+3. turnaround: 30,  time waited: 24  
+4. turnaround: 22,  time waited: 0  
+5. turnaround: 56,  time waited: 26  
+6. turnaround: 3,  time waited: 1  
+7. turnaround: 58,  time waited: 54  
+Average throughput was 11
+Currently using EP algorithm
+1. turnaround: 20,  time waited: 0  
+2. turnaround: 32,  time waited: 12  
+3. turnaround: 75,  time waited: 69  
+4. turnaround: 36,  time waited: 29  
+5. turnaround: 78,  time waited: 71  
+6. turnaround: 62,  time waited: 32  
+7. turnaround: 96,  time waited: 76  
+Average throughput was 16
+Currently using EP algorithm
+1. turnaround: 7,  time waited: 5  
+2. turnaround: 12,  time waited: 7  
+3. turnaround: 28,  time waited: 25  
+4. turnaround: 18,  time waited: 11  
+5. turnaround: 31,  time waited: 27  
+6. turnaround: 21,  time waited: 17  
+7. turnaround: 56,  time waited: 81  
+Average throughput was 8
+Currently using EP algorithm
+1. turnaround: 93,  time waited: 63  
+2. turnaround: 10,  time waited: 5  
+3. turnaround: 33,  time waited: 30  
+4. turnaround: 28,  time waited: 21  
+5. turnaround: 59,  time waited: 57  
+6. turnaround: 8,  time waited: 4  
+7. turnaround: 28,  time waited: 23  
+8. turnaround: 30,  time waited: 25  
+Average throughput was 11
+Currently using EP algorithm
+1. turnaround: 5,  time waited: 0  
+2. turnaround: 10,  time waited: 5  
+3. turnaround: 26,  time waited: 23  
+4. turnaround: 16,  time waited: 9  
+5. turnaround: 27,  time waited: 25  
+6. turnaround: 4,  time waited: 0  
+7. turnaround: 16,  time waited: 11  
+8. turnaround: 43,  time waited: 13  
+Average throughput was 8

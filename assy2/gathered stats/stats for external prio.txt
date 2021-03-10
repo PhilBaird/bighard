@@ -1,0 +1,63 @@
+Currently using FCFS algorithm
+1. turnaround: 22,  time waited: 0  
+2. turnaround: 25,  time waited: 14  
+3. turnaround: 35,  time waited: 23  
+4. turnaround: 46,  time waited: 35  
+5. turnaround: 57,  time waited: 43  
+Average throughput was 14
+Currently using FCFS algorithm
+1. turnaround: 7,  time waited: 2  
+2. turnaround: 7,  time waited: 4  
+3. turnaround: 11,  time waited: 5  
+4. turnaround: 27,  time waited: 22  
+5. turnaround: 33,  time waited: 24  
+6. turnaround: 7,  time waited: 3  
+7. turnaround: 14,  time waited: 4  
+Average throughput was 7
+Currently using FCFS algorithm
+1. turnaround: 5,  time waited: 0  
+2. turnaround: 3,  time waited: 0  
+3. turnaround: 7,  time waited: 1  
+4. turnaround: 29,  time waited: 7  
+5. turnaround: 56,  time waited: 26  
+6. turnaround: 3,  time waited: 1  
+7. turnaround: 58,  time waited: 54  
+Average throughput was 11
+Currently using FCFS algorithm
+1. turnaround: 20,  time waited: 0  
+2. turnaround: 32,  time waited: 12  
+3. turnaround: 36,  time waited: 30  
+4. turnaround: 43,  time waited: 36  
+5. turnaround: 47,  time waited: 40  
+6. turnaround: 77,  time waited: 47  
+7. turnaround: 96,  time waited: 76  
+Average throughput was 16
+Currently using FCFS algorithm
+1. turnaround: 36,  time waited: 34  
+2. turnaround: 41,  time waited: 36  
+3. turnaround: 44,  time waited: 41  
+4. turnaround: 51,  time waited: 44  
+5. turnaround: 53,  time waited: 51  
+6. turnaround: 57,  time waited: 53  
+7. turnaround: 27,  time waited: 20  
+Average throughput was 8
+Currently using FCFS algorithm
+1. turnaround: 110,  time waited: 80  
+2. turnaround: 10,  time waited: 5  
+3. turnaround: 13,  time waited: 10  
+4. turnaround: 46,  time waited: 39  
+5. turnaround: 47,  time waited: 45  
+6. turnaround: 8,  time waited: 4  
+7. turnaround: 13,  time waited: 8  
+8. turnaround: 15,  time waited: 10  
+Average throughput was 13
+Currently using FCFS algorithm
+1. turnaround: 5,  time waited: 0  
+2. turnaround: 10,  time waited: 5  
+3. turnaround: 13,  time waited: 10  
+4. turnaround: 20,  time waited: 13  
+5. turnaround: 22,  time waited: 20  
+6. turnaround: 11,  time waited: 7  
+7. turnaround: 16,  time waited: 11  
+8. turnaround: 43,  time waited: 13  
+Average throughput was 8

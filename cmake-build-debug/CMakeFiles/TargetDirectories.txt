@@ -1,0 +1,3 @@
+C:/Users/plipm/CLionProjects/bighard/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/plipm/CLionProjects/bighard/cmake-build-debug/CMakeFiles/bighard.dir
+C:/Users/plipm/CLionProjects/bighard/cmake-build-debug/CMakeFiles/rebuild_cache.dir

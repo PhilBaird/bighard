@@ -1,0 +1,26 @@
+Currently using RR algorithm
+1. turnaround: 93,  time waited: 71  
+2. turnaround: 62,  time waited: 51  
+3. turnaround: 63,  time waited: 51  
+4. turnaround: 65,  time waited: 67  
+5. turnaround: 72,  time waited: 75  
+Average throughput was 18
+Currently using RR algorithm
+1. turnaround: 38,  time waited: 33  
+2. turnaround: 4,  time waited: 1  
+3. turnaround: 44,  time waited: 38  
+4. turnaround: 81,  time waited: 58  
+5. turnaround: 92,  time waited: 77  
+6. turnaround: 4,  time waited: 1  
+7. turnaround: 42,  time waited: 36  
+Average throughput was 15
+Currently using RR algorithm
+1. turnaround: 72,  time waited: 57  
+2. turnaround: 41,  time waited: 36  
+3. turnaround: 10,  time waited: 7  
+4. turnaround: 54,  time waited: 47  
+5. turnaround: 15,  time waited: 13  
+6. turnaround: 28,  time waited: 24  
+7. turnaround: 30,  time waited: 25  
+8. turnaround: 71,  time waited: 41  
+Average throughput was 12

@@ -1,5 +1,5 @@
 //
-// Created by Philip Baird on 2021-04-13.
+// Created by Philip Baird and Dimitry Koutchine on 2021-04-13.
 //
 
 #ifndef BIGHARD_DBSERVER_H

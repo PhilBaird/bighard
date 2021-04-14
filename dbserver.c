@@ -133,18 +133,18 @@ int main(int ac, char *av[]) {
 
 
 }
-
+// Function checks if pin matches the pin in the database
 int readPin(int pin, int acntNumber){
 
     FILE* file = fopen ("../db.txt", "r");
-    int i,i1;
-    float f;
-    bool check = false;
+    int i,i1; //pin, acntNumber
+    float f; //balance
+    bool check = false;// boolean to see if acntNumber was found
 
     while (!feof (file)){
         fscanf (file, "%d,%d,%f", &i, &i1, &f);
         if(i == acntNumber){
-            check = true;
+            check = true; // if acnt number is found it breaks out of while loop
             break;
         }
 
@@ -154,16 +154,17 @@ int readPin(int pin, int acntNumber){
     if(check == true)
     {
         if (pin - 1 == i1) {
-            return 1; //correct
+            return 1; //correct pin was entered
         } else {
-            return 0; //wrong
+            return 0; //wrong pin was entered
         }
     }
     else{
-        return -1;
+        return -1; // acnt number was not found
     }
 
 }
+// returns balance for the given acnt number from database
 float readBalance(int acntNumber){
 
     FILE* file = fopen ("../db.txt", "r");
@@ -180,7 +181,7 @@ float readBalance(int acntNumber){
     }
     fclose (file);
     if (check) {
-        return f;
+        return f; // returns balance from database
     }
     return -1; // if account number is not found
 
@@ -188,9 +189,9 @@ float readBalance(int acntNumber){
 int withdraw(int acntNumber, float amnt){
 
     FILE* file = fopen ("../db.txt", "r");
-    int i,i1,i3,i4;
+    int i,i1,i3,i4; // i3 , i4, and f1 are for second while loop
     float f,f1;
-    int pos = 0;
+    int pos = 0;// keeps track of which line the acnt is found on
     bool check = false;
     while (!feof (file)){
         fscanf (file, "%d,%d,%f", &i, &i1, &f);
@@ -205,15 +206,13 @@ int withdraw(int acntNumber, float amnt){
     fclose (file);
     if (check) {
         if (f < amnt){
-            return 0;
+            return 0; // returns 0 if the amnt is larger than balance
         }
         else{
             float newAmnt = f - amnt;
 
             FILE* file = fopen ("../db.txt", "r");
             FILE* file2 = fopen ("../_db.txt", "w");
-            float i,i1,i2;
-            int breakout = 0;
             while (!feof (file))
             {
                 fscanf (file, "%d,%d,%f", &i3, &i4, &f1);
@@ -239,7 +238,7 @@ int withdraw(int acntNumber, float amnt){
     return -1; // if account number is not found
 
 }
-
+//adds another entry in the database
 void updateDB(int acntNumber, int pin, float funds){
 
     FILE* file = fopen ("../db.txt", "a");

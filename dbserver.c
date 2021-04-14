@@ -12,9 +12,9 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include "dbserver.h"
+#include "stdbool.h"
 
-
-void readFile();
+int readPin();
 
 int main(int ac, char *av[]) {
     int s_mutex;
@@ -47,7 +47,82 @@ int main(int ac, char *av[]) {
 
 }
 
+int readPin(int pin, int acntNumber){
 
+    FILE* file = fopen ("input.txt", "r");
+    int i,i1;
+    float f;
+    bool check = false;
+
+    while (!feof (file)){
+        fscanf (file, "%d %d %f", &i, &i1, &f);
+        if(i == acntNumber){
+            check = true;
+            break;
+        }
+
+    }
+    fclose (file);
+
+    if(check == true)
+    {
+        if ((pin - 1) == i1) {
+            return 1; //correct
+        } else {
+            return 0; //wrong
+        }
+    }
+    else{
+        return -1;
+    }
+
+}
+float readBalance(int acntNumber){
+
+    FILE* file = fopen ("input.txt", "r");
+    int i,i1;
+    float f;
+    bool check = false;
+    while (!feof (file)){
+        fscanf (file, "%d %d %f", &i, &i1, &f);
+        if(i == acntNumber){
+            check = true;
+            break;
+        }
+
+    }
+    fclose (file);
+    if (check) {
+        return f;
+    }
+    return -1; // if account number is not found
+
+}
+float withdraw(int acntNumber, float amnt){
+
+    FILE* file = fopen ("input.txt", "r");
+    int i,i1;
+    float f;
+    int pos = 0;
+    bool check = false;
+    while (!feof (file)){
+        fscanf (file, "%d %d %f", &i, &i1, &f);
+        pos++;
+        if(i == acntNumber){
+            check = true;
+            break;
+        }
+
+    }
+
+    fclose (file);
+    if (check) {
+        if (f < amnt)
+        {return 0;}
+    }
+    return -1; // if account number is not found
+
+}
 //void readFile()
 //{
 //    FILE* file = fopen ("db.txt", "r");

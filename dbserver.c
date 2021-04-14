@@ -101,8 +101,8 @@ float readBalance(int acntNumber){
 float withdraw(int acntNumber, float amnt){
 
     FILE* file = fopen ("input.txt", "r");
-    int i,i1;
-    float f;
+    int i,i1,i3,i4;
+    float f,f1;
     int pos = 0;
     bool check = false;
     while (!feof (file)){
@@ -119,7 +119,23 @@ float withdraw(int acntNumber, float amnt){
     if (check) {
         if (f < amnt)
         {return 0;}
+        else{
+            int newAmnt = f - amnt;
+            int x = 0;
+            FILE* file = fopen ("input.txt", "w");
+            while (!feof (file)){
+                fscanf (file, "%d %d %f", &i3, &i4, &f1);
+                if(x == pos ){
+                    fprintf(file,"%d %d %f", &i, &i1, &newAmnt);
+                    break;
+                }
+                return 1;
+
+            }
+
+        }
     }
+    else
     return -1; // if account number is not found
 
 }

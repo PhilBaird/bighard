@@ -42,14 +42,12 @@ int main() {
         _msg.accountNumber = accountNumber;
         _msg.PIN = PIN;
         _msg.funds = funds;
-        SemaphoreWait(s_mutex, -1);
         if(msgsnd(msqid, &_msg, msgLength, 0) == -1){
             perror("msgsnd: msgsnd failed");
             exit(1);
         } else {
             printf("dbEditor: Message Sent: %i\n", _msg.accountNumber);
         }
-        SemaphoreSignal(s_mutex);
     }
 
     return 0;

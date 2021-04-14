@@ -14,7 +14,10 @@
 #include "dbserver.h"
 #include "stdbool.h"
 
-int readPin();
+float readBalance(int acntNumber);
+int readPin(int pin, int acntNumber);
+int withdraw(int acntNumber, float amnt);
+void updateDB(int acntNumber, int pin, float funds);
 
 int main(int ac, char *av[]) {
     int s_mutex;
@@ -35,27 +38,111 @@ int main(int ac, char *av[]) {
     } else {
 //        printf("Message ID: %i\n", msqid);
     }
+    while (1){
+        // send   type 1 for PIN, 2 for BALANCE, 3 for WITHDRAW, 4 for UPDATEDB
+        // return type 5 for PIN, 6 for BALANCE, 7 for WITHDRAW,
+        int child = fork();
+        if(child == 0) {
+            // child
+            int gchild = fork();
+            if(gchild == 0) {
+                // child
+                int ggchild = fork();
+                if(ggchild == 0) {
+                    // ggchild
+                    // receive PIN
+                    struct my_message rmsg;
+                    if(msgrcv(msqid, &rmsg, msgLength, 1, 0) == -1){
+                        perror("msgrcv: msgrcv failed");
+                        exit(1);
+                    } else {
+                        printf("\nPIN Message Received: %i\n", rmsg.accountNumber);
+                    }
+                    struct my_message _msg;
+                    _msg.message_type = 5;
+                    SemaphoreWait(s_mutex, -1);
+                    _msg.data = readPin(rmsg.PIN, rmsg.accountNumber);
+                    SemaphoreSignal(s_mutex);
+                    if(msgsnd(msqid, &_msg, msgLength, 0) == -1){
+                        perror("msgsnd: msgsnd failed");
+                        exit(1);
+                    } else {
+                        printf("PIN Message Sent: %i\n", _msg.data);
+                    }
+                }else{
+                    // gchild
+                    // receive BALANCE
+                    struct my_message rmsg;
+                    if(msgrcv(msqid, &rmsg, msgLength, 2, 0) == -1){
+                        perror("msgrcv: msgrcv failed");
+                        exit(1);
+                    } else {
+                        printf("\nBALANCE Message Received: %i\n", rmsg.accountNumber);
+                    }
+                    struct my_message _msg;
+                    _msg.message_type = 6;
+                    SemaphoreWait(s_mutex, -1);
+                    _msg.data = readBalance(rmsg.accountNumber);
+                    SemaphoreSignal(s_mutex);
+                    if(msgsnd(msqid, &_msg, msgLength, 0) == -1){
+                        perror("msgsnd: msgsnd failed");
+                        exit(1);
+                    } else {
+                        printf("BALANCE Message Sent: %i\n", _msg.data);
+                    }
+                }
 
-    // receive message
-    struct my_message rmsg;
-    if(msgrcv(msqid, &rmsg, msgLength, 4, 0) == -1){
-        perror("msgrcv: msgrcv failed");
-        exit(1);
-    } else {
-        printf("\ndbServer: Message Received: %i\n", rmsg.accountNumber);
+            }else{
+                // child
+                // receive WITHDRAW
+                struct my_message rmsg;
+                if(msgrcv(msqid, &rmsg, msgLength, 3, 0) == -1){
+                    perror("msgrcv: msgrcv failed");
+                    exit(1);
+                } else {
+                    printf("\nWITHDRAW Message Received: %i\n", rmsg.accountNumber);
+                }
+                struct my_message _msg;
+                _msg.message_type = 7;
+                SemaphoreWait(s_mutex, -1);
+                _msg.data = withdraw(rmsg.accountNumber, rmsg.funds);
+                SemaphoreSignal(s_mutex);
+                if(msgsnd(msqid, &_msg, msgLength, 0) == -1){
+                    perror("msgsnd: msgsnd failed");
+                    exit(1);
+                } else {
+                    printf("WITHDRAW Message Sent: %i\n", _msg.data);
+                }
+            }
+
+        }else{
+            // parent
+            // receive UPDATEDB
+            struct my_message rmsg;
+            if(msgrcv(msqid, &rmsg, msgLength, 4, 0) == -1){
+                perror("msgrcv: msgrcv failed");
+                exit(1);
+            } else {
+                printf("\nUPDATEDB Message Received: %i\n", rmsg.accountNumber);
+                SemaphoreWait(s_mutex, -1);
+                updateDB(rmsg.accountNumber, rmsg.PIN, rmsg.funds);
+                SemaphoreSignal(s_mutex);
+            }
+        }
     }
+
 
 }
 
 int readPin(int pin, int acntNumber){
 
-    FILE* file = fopen ("input.txt", "r");
+    FILE* file = fopen ("../db.txt", "r");
     int i,i1;
     float f;
     bool check = false;
 
     while (!feof (file)){
-        fscanf (file, "%d %d %f", &i, &i1, &f);
+        fscanf (file, "%d,%d,%f", &i, &i1, &f);
         if(i == acntNumber){
             check = true;
             break;
@@ -66,7 +153,7 @@ int readPin(int pin, int acntNumber){
 
     if(check == true)
     {
-        if ((pin - 1) == i1) {
+        if (pin - 1 == i1) {
             return 1; //correct
         } else {
             return 0; //wrong
@@ -79,12 +166,12 @@ int readPin(int pin, int acntNumber){
 }
 float readBalance(int acntNumber){
 
-    FILE* file = fopen ("input.txt", "r");
+    FILE* file = fopen ("../db.txt", "r");
     int i,i1;
     float f;
     bool check = false;
     while (!feof (file)){
-        fscanf (file, "%d %d %f", &i, &i1, &f);
+        fscanf (file, "%d,%d,%f", &i, &i1, &f);
         if(i == acntNumber){
             check = true;
             break;
@@ -98,15 +185,15 @@ float readBalance(int acntNumber){
     return -1; // if account number is not found
 
 }
-float withdraw(int acntNumber, float amnt){
+int withdraw(int acntNumber, float amnt){
 
-    FILE* file = fopen ("input.txt", "r");
+    FILE* file = fopen ("../db.txt", "r");
     int i,i1,i3,i4;
     float f,f1;
     int pos = 0;
     bool check = false;
     while (!feof (file)){
-        fscanf (file, "%d %d %f", &i, &i1, &f);
+        fscanf (file, "%d,%d,%f", &i, &i1, &f);
         pos++;
         if(i == acntNumber){
             check = true;
@@ -117,21 +204,34 @@ float withdraw(int acntNumber, float amnt){
 
     fclose (file);
     if (check) {
-        if (f < amnt)
-        {return 0;}
+        if (f < amnt){
+            return 0;
+        }
         else{
-            int newAmnt = f - amnt;
-            int x = 0;
-            FILE* file = fopen ("input.txt", "w");
-            while (!feof (file)){
-                fscanf (file, "%d %d %f", &i3, &i4, &f1);
-                if(x == pos ){
-                    fprintf(file,"%d %d %f", &i, &i1, &newAmnt);
-                    break;
+            float newAmnt = f - amnt;
+
+            FILE* file = fopen ("../db.txt", "r");
+            FILE* file2 = fopen ("../_db.txt", "w");
+            float i,i1,i2;
+            int breakout = 0;
+            while (!feof (file))
+            {
+                fscanf (file, "%d,%d,%f", &i3, &i4, &f1);
+//        printf ("\n%f %f %f\n", i, i1, i2);
+                if(i3 == acntNumber){
+                    fprintf(file2,"%d,%d,%f\n", i3, i4, newAmnt);
+                }else{
+                    fprintf(file2,"%d,%d,%f\n", i3, i4, f1);
                 }
-                return 1;
 
             }
+
+            fclose (file);
+            fclose (file2);
+            remove("../db.txt");
+            rename("../_db.txt", "../db.txt");
+            return 1;
+
 
         }
     }
@@ -139,14 +239,13 @@ float withdraw(int acntNumber, float amnt){
     return -1; // if account number is not found
 
 }
-//void readFile()
-//{
-//    FILE* file = fopen ("db.txt", "r");
-//    float i,i1,i2
-//    while (!feof (file))
-//    {
-//        fscanf (file, "%d,%d,%d", &i, &i1, &i2);
-//        printf ("\n%d %d %d\n", i, i1, i2);
-//    }
-//    fclose (file);
-//}
+
+void updateDB(int acntNumber, int pin, float funds){
+
+    FILE* file = fopen ("../db.txt", "a");
+    fprintf(file,"\n%d,%d,%f", acntNumber, pin-1, funds);
+    fclose (file);
+
+
+
+}

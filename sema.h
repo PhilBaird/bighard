@@ -5,7 +5,8 @@
 #ifndef UNTITLED_SEMA_H
 #define UNTITLED_SEMA_H
 struct my_message {
-    // type 1 for PIN, 2 for BALANCE, 3 for WITHDRAW, 4 for UPDATEDB
+    // send   type 1 for PIN, 2 for BALANCE, 3 for WITHDRAW, 4 for UPDATEDB
+    // return type 5 for PIN, 6 for BALANCE, 7 for WITHDRAW,
     long message_type;
     int data, accountNumber, PIN;
     float funds;

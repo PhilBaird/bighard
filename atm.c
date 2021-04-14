@@ -16,7 +16,7 @@
 
 int main() {
 
-    // create shared message
+    // access shared message created by dbserver
     int msqid = msgget((key_t)1111, IPC_CREAT| 0600);
     if (msqid == -1){
         perror("msgget: msgget failed");
@@ -29,7 +29,6 @@ int main() {
     // return type 5 for PIN, 6 for BALANCE, 7 for WITHDRAW,
     while(1){
         int accountNumber, PIN;
-        float funds;
         int breakout = 0;
         while(breakout < 50){
             printf("Account Number: ");
@@ -57,6 +56,7 @@ int main() {
                     exit(1);
                 } else {
                     printf("\nPIN Message Received: %i\n", rmsg.data);
+                    // 1 is a correct pin
                     if(rmsg.data == 1) breakout = 50;
                 }
                 breakout++;
@@ -79,6 +79,7 @@ int main() {
                 _msg.accountNumber = accountNumber;
                 _msg.PIN = PIN;
                 _msg.funds = -1;
+                // send the message to the dbserver
                 if(msgsnd(msqid, &_msg, msgLength, 0) == -1){
                     perror("msgsnd: msgsnd failed");
                     exit(1);
@@ -121,9 +122,6 @@ int main() {
                 }
             }
         }
-
-
-//        printf("AccountNumber: %d PIN: %d Funds: %f\n",accountNumber,PIN,funds);
 
     }
 

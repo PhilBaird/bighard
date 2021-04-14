@@ -31,6 +31,7 @@ int main(int ac, char *av[]) {
         exit(1);
     }
 
+    // open message
     int msqid = msgget((key_t)1111, IPC_CREAT| 0600);
     if (msqid == -1){
         perror("msgget: msgget failed");
@@ -41,6 +42,8 @@ int main(int ac, char *av[]) {
     while (1){
         // send   type 1 for PIN, 2 for BALANCE, 3 for WITHDRAW, 4 for UPDATEDB
         // return type 5 for PIN, 6 for BALANCE, 7 for WITHDRAW,
+
+        // create a thread for each message type.
         int child = fork();
         if(child == 0) {
             // child
@@ -60,7 +63,9 @@ int main(int ac, char *av[]) {
                     }
                     struct my_message _msg;
                     _msg.message_type = 5;
+                    // while the file is being accessed lock the semaphore
                     SemaphoreWait(s_mutex, -1);
+                    // sends to atm or dbeditor the return from readpin in the data
                     _msg.data = readPin(rmsg.PIN, rmsg.accountNumber);
                     SemaphoreSignal(s_mutex);
                     if(msgsnd(msqid, &_msg, msgLength, 0) == -1){
@@ -240,11 +245,7 @@ int withdraw(int acntNumber, float amnt){
 }
 //adds another entry in the database
 void updateDB(int acntNumber, int pin, float funds){
-
     FILE* file = fopen ("../db.txt", "a");
     fprintf(file,"\n%d,%d,%f", acntNumber, pin-1, funds);
     fclose (file);
-
-
-
 }

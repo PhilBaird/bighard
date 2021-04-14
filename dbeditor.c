@@ -16,7 +16,7 @@
 
 int main() {
 
-    // create shared message
+    // access shared message created by dbserver
     int msqid = msgget((key_t)1111, IPC_CREAT| 0600);
     if (msqid == -1){
         perror("msgget: msgget failed");
@@ -24,7 +24,6 @@ int main() {
     } else {
 //        printf("Message ID: %i\n", msqid);
     }
-
 
     while(1){
         int accountNumber, PIN;

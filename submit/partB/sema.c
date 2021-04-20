@@ -7,7 +7,7 @@
 #include <printf.h>
 
 int SemaphoreWait(int semid, int iMayBlock ) {
-    printf("Wait\n");
+//    printf("Wait\n");
     struct sembuf sbOperation;
     sbOperation.sem_num = 0;
     sbOperation.sem_op = -1;
@@ -16,7 +16,7 @@ int SemaphoreWait(int semid, int iMayBlock ) {
 }
 
 int SemaphoreSignal( int semid ) {
-    printf("Signal\n");
+//    printf("Signal\n");
     struct sembuf sbOperation;
     sbOperation.sem_num = 0;
     sbOperation.sem_op = +1;
@@ -25,13 +25,13 @@ int SemaphoreSignal( int semid ) {
 }
 
 void SemaphoreRemove( int semid ) {
-    printf("Remove\n");
+//    printf("Remove\n");
     if(semid != -1 )
         semctl( semid, 0, IPC_RMID , 0);
 }
 
 int SemaphoreCreate(int iInitialValue) {
-    printf("Create\n");
+//    printf("Create\n");
     int semid;
     union semun suInitData;
     int iError;

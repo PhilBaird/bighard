@@ -18,7 +18,6 @@ float readBalance(int acntNumber);
 int readPin(int pin, int acntNumber);
 int withdraw(int acntNumber, float amnt);
 void updateDB(int acntNumber, int pin, float funds);
-void intrest();
 
 int main(int ac, char *av[]) {
     int s_mutex;
@@ -58,9 +57,7 @@ int main(int ac, char *av[]) {
                         // gggchild
                         // intrest
                         sleep(60);
-                        SemaphoreWait(s_mutex, -1);
                         intrest();
-                        SemaphoreSignal(s_mutex);
                     }else{
                         // ggchild
                         // receive PIN
@@ -73,13 +70,11 @@ int main(int ac, char *av[]) {
                         }
                         struct my_message _msg;
                         _msg.message_type = rmsg.atmID * 3 + 5;
-
                         // while the file is being accessed lock the semaphore
                         SemaphoreWait(s_mutex, -1);
                         // sends to atm or dbeditor the return from readpin in the data
                         _msg.data = readPin(rmsg.PIN, rmsg.accountNumber);
                         SemaphoreSignal(s_mutex);
-                        printf("Return Pin %ld\n", _msg.message_type);
                         if(msgsnd(msqid, &_msg, msgLength, 0) == -1){
                             perror("msgsnd: msgsnd failed");
                             exit(1);
@@ -155,14 +150,13 @@ int main(int ac, char *av[]) {
 // Function checks if pin matches the pin in the database
 int readPin(int pin, int acntNumber){
 
-    printf("READPIN: pin %i acnt %i\n", pin, acntNumber);
     FILE* file = fopen ("../db.txt", "r");
     int i,i1; //pin, acntNumber
     float f; //balance
     bool check = false;// boolean to see if acntNumber was found
 
     while (!feof (file)){
-        fscanf (file, "%d,%d,%f\n", &i, &i1, &f);
+        fscanf (file, "%d,%d,%f", &i, &i1, &f);
         if(i == acntNumber){
             check = true; // if acnt number is found it breaks out of while loop
             break;
@@ -192,7 +186,7 @@ float readBalance(int acntNumber){
     float f;
     bool check = false;
     while (!feof (file)){
-        fscanf (file, "%d,%d,%f\n", &i, &i1, &f);
+        fscanf (file, "%d,%d,%f", &i, &i1, &f);
         if(i == acntNumber){
             check = true;
             break;
@@ -214,7 +208,7 @@ int withdraw(int acntNumber, float amnt){
     int pos = 0;// keeps track of which line the acnt is found on
     bool check = false;
     while (!feof (file)){
-        fscanf (file, "%d,%d,%f\n", &i, &i1, &f);
+        fscanf (file, "%d,%d,%f", &i, &i1, &f);
         pos++;
         if(i == acntNumber){
             check = true;
@@ -235,7 +229,7 @@ int withdraw(int acntNumber, float amnt){
             FILE* file2 = fopen ("../_db.txt", "w");
             while (!feof (file))
             {
-                fscanf (file, "%d,%d,%f\n", &i3, &i4, &f1);
+                fscanf (file, "%d,%d,%f", &i3, &i4, &f1);
                 if(i3 == acntNumber){
                     fprintf(file2,"%d,%d,%f\n", i3, i4, newAmnt);
                 }else{
@@ -254,11 +248,11 @@ int withdraw(int acntNumber, float amnt){
         }
     }
     else
-        return -1; // if account number is not found
+    return -1; // if account number is not found
 
 }
-void intrest(){
-    printf("Interest Calculation\n");
+int intrest(){
+    printf("Interest Calculation");
     int i3,i4;
     float f1;
 
@@ -267,22 +261,24 @@ void intrest(){
     while (!feof (file))
     {
         float newAmnt = 0;
-        fscanf (file, "%d,%d,%f\n", &i3, &i4, &f1);
+        fscanf (file, "%d,%d,%f", &i3, &i4, &f1);
         if(f1 < 0){
             newAmnt = f1 * 0.98;
         }
         else{
             newAmnt = f1 * 1.01;
         }
-        fprintf(file2,"%d,%d,%f\n", i3, i4, newAmnt);
+        printf(file2,"%d,%d,%f\n", i3, i4, newAmnt);
 
     }
-
 
     fclose (file);
     fclose (file2);
     remove("../db.txt");
     rename("../_db.txt", "../db.txt");
+    return 1;
+
+
 }
 //adds another entry in the database
 void updateDB(int acntNumber, int pin, float funds){

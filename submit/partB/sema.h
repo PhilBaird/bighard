@@ -9,7 +9,7 @@ struct my_message {
     // return type 5 for PIN, 6 for BALANCE, 7 for WITHDRAW,
     long message_type;
     // data is for returns
-    int data, accountNumber, PIN, atmID;
+    int data, accountNumber, PIN, atm_id;
     float funds;
 };
 int SemaphoreCreate(int iInitialValue);

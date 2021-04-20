@@ -37,7 +37,7 @@ int main() {
             printf("Account Number: ");
             scanf("%d", &accountNumber);
             while(breakout < 3){
-                printf("PIN: ");
+                printf("PIN: : ");
                 scanf("%d", &PIN);
                 // send PIN
                 struct my_message _msg;
@@ -46,7 +46,7 @@ int main() {
                 _msg.accountNumber = accountNumber;
                 _msg.PIN = PIN;
                 _msg.funds = -1;
-                _msg.atmID = atmID ;
+                _msg.atmID = atmID * 3;
                 if(msgsnd(msqid, &_msg, msgLength, 0) == -1){
                     perror("msgsnd: msgsnd failed");
                     exit(1);
@@ -55,8 +55,7 @@ int main() {
                 }
                 // receive PIN
                 struct my_message rmsg;
-                printf("Return Pin %ld\n", atmID * 3 + 5);
-                if(msgrcv(msqid, &rmsg, msgLength, (long)(atmID * 3 + 5), 0) == -1){
+                if(msgrcv(msqid, &rmsg, msgLength, atmID * 3 + 5, 0) == -1){
                     perror("msgrcv: msgrcv failed");
                     exit(1);
                 } else {
@@ -84,7 +83,7 @@ int main() {
                 _msg.accountNumber = accountNumber;
                 _msg.PIN = PIN;
                 _msg.funds = -1;
-                _msg.atmID = atmID;
+                _msg.atmID = atmID * 3;
                 // send the message to the dbserver
                 if(msgsnd(msqid, &_msg, msgLength, 0) == -1){
                     perror("msgsnd: msgsnd failed");
@@ -112,7 +111,7 @@ int main() {
                 _msg.accountNumber = accountNumber;
                 _msg.PIN = PIN;
                 _msg.funds = withdraw;
-                _msg.atmID = atmID;
+                _msg.atmID = atmID * 3;
                 if(msgsnd(msqid, &_msg, msgLength, 0) == -1){
                     perror("msgsnd: msgsnd failed");
                     exit(1);
